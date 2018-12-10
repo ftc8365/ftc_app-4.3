@@ -211,9 +211,9 @@ public class DriverControl2 extends LinearOpMode {
                 motorRPPower = -1.0;
         }
 
-        robot.motorLift.setPower(motorRPPower);
+//        robot.motorLift.setPower(motorRPPower);
 
-        telemetry.addData("motorLift", motorRPPower);
+//        telemetry.addData("motorLift", motorRPPower);
     }
 
 /*

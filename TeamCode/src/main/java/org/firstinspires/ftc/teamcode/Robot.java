@@ -34,6 +34,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -66,7 +67,7 @@ public class Robot
     public DcMotor motorFrontRight     = null;
     public DcMotor motorFrontLeft      = null;
     public DcMotor motorCenter         = null;
-    public DcMotor motorLift           = null;
+//    public DcMotor motorLift           = null;
 //    public DcMotor motorIntakeHopper   = null;
 //    public DcMotor motorIntakeSlide    = null;
 
@@ -126,12 +127,12 @@ public class Robot
 
     public void lowerRobot()
     {
-        while (rangeSensorBottom.rawUltrasonic() > 6) {
-            motorLift.setPower(0.4);
-        }
+     //   while (rangeSensorBottom.rawUltrasonic() > 6) {
+     //       motorLift.setPower(0.4);
+     //   }
 
-        motorLift.setPower(0.0);
-        sleep(150);
+       // motorLift.setPower(0.0);
+       // sleep(150);
     }
 
     //----------------------------------------------------------------------------------------------
@@ -142,17 +143,17 @@ public class Robot
         motorFrontRight     = hardwareMap.get(DcMotor.class, "motor1");
         motorFrontLeft      = hardwareMap.get(DcMotor.class, "motor2");
         motorCenter         = hardwareMap.get(DcMotor.class, "motor3");
-        motorLift           = hardwareMap.get(DcMotor.class, "motor4");
+//        motorLift           = hardwareMap.get(DcMotor.class, "motor4");
 
 //        motorIntakeHopper   = hardwareMap.get(DcMotor.class, "motor6");
 //        motorIntakeSlide    = hardwareMap.get(DcMotor.class, "motor7");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
-        motorFrontRight.setDirection(DcMotor.Direction.FORWARD);
-        motorFrontLeft.setDirection(DcMotor.Direction.REVERSE);
+        motorFrontRight.setDirection(DcMotor.Direction.REVERSE);
+        motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         motorCenter.setDirection(DcMotor.Direction.FORWARD);
-        motorLift.setDirection(DcMotor.Direction.FORWARD);
+//        motorLift.setDirection(DcMotor.Direction.FORWARD);
     }
 
     public void initRangeSensors( HardwareMap hardwareMap ) {
@@ -556,6 +557,6 @@ public class Robot
         this.motorCenter.setPower(0);
         this.motorFrontLeft.setPower(0);
         this.motorFrontRight.setPower(0);
-        this.motorLift.setPower(0);
+//        this.motorLift.setPower(0);
     }
 }
