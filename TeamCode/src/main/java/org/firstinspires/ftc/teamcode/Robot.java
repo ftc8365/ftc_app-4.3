@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -90,6 +91,8 @@ public class Robot
     // Declare sensors
     /////////////////////
     ModernRoboticsI2cRangeSensor rangeSensorBottom   = null;
+    ModernRoboticsI2cRangeSensor rangeSensorFront   = null;
+    ModernRoboticsI2cRangeSensor rangeSensorBack   = null;
 
     // The IMU sensor object
     BNO055IMU imu;
@@ -152,12 +155,14 @@ public class Robot
         // Reverse the motor that runs backwards when connected directly to the battery
         motorFrontRight.setDirection(DcMotor.Direction.REVERSE);
         motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
-        motorCenter.setDirection(DcMotor.Direction.FORWARD);
+        motorCenter.setDirection(DcMotor.Direction.REVERSE);
 //        motorLift.setDirection(DcMotor.Direction.FORWARD);
     }
 
     public void initRangeSensors( HardwareMap hardwareMap ) {
         rangeSensorBottom   = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor1");
+        rangeSensorFront    = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor2");
+        rangeSensorBack    = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor3");
     }
 
     public void initServos( HardwareMap hardwareMap ) {
@@ -249,6 +254,102 @@ public class Robot
         motorFrontLeft.setPower(0);
         motorCenter.setPower(0);
     }
+
+    ////////////////////////////////////////////////////////
+    public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
+    {
+        motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        int initPosition = motorFrontRight.getCurrentPosition();
+
+        boolean cont = true;
+        double power = 0.05;
+
+        motorFrontRight.setPower( power );
+        motorFrontLeft.setPower( power );
+        motorCenter.setPower( 0.0 );
+
+        while (cont)
+        {
+            if (motorFrontRight.getCurrentPosition() - initPosition >= 1000 * rotation)
+                cont = false;
+
+            if (power < targetPower)
+                power += 0.02;
+
+            double sensorFront = this.rangeSensorFront.rawUltrasonic();
+            double sensorBack = this.rangeSensorBack.rawUltrasonic();
+
+            double motorCenterPower = (sensorBack - sensorFront) * 0.05;
+
+            if (sensorFront > 100)
+                continue;
+
+            if (sensorFront >= distance + 3)
+            {
+                motorFrontRight.setPower( -0.10 );
+                motorFrontLeft.setPower( 0.10 );
+                motorCenter.setPower(0.4);
+            }
+            else if (sensorFront <= distance - 3)
+            {
+                motorFrontRight.setPower( 0.10 );
+                motorFrontLeft.setPower( -0.10 );
+                motorCenter.setPower( -0.4 );
+            }
+            else
+            {
+                motorFrontRight.setPower( power );
+                motorFrontLeft.setPower( power );
+
+
+                if (motorCenterPower > 0.20)
+                    motorCenterPower = 0.20;
+
+                motorCenter.setPower( motorCenterPower );
+
+            }
+
+            telemetry.addData("sensorFront", sensorFront);
+            telemetry.addData("sensorBack", sensorBack);
+            telemetry.addData("motorCenterPower", motorCenterPower);
+            telemetry.update();
+
+
+
+/*
+            telemetry.addData("joystick DA pos", getDirectionAwareJoystickPosition());
+
+            if (sensorFront > 6){
+                    motorCenter.setPower(-power);
+            }
+            else if (sensorFront == 6){
+                if (sensorBack > 6){
+                    motorCenter.setPower(power);
+                }
+                else if (sensorBack == 6){
+                    motorCenter.setPower(0);
+                }
+                else if (sensorBack < 6){
+                    motorCenter.setPower(-power);
+                }
+            }
+            else if (sensorFront < 6){
+                    motorCenter.setPower(power);
+            }
+*/
+        }
+        motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        motorFrontRight.setPower(0);
+        motorFrontLeft.setPower(0);
+        motorCenter.setPower(0);
+    }
+
 
 
     ////////////////////////////////////////////////////////

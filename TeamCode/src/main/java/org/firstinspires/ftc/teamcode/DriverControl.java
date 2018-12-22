@@ -79,6 +79,7 @@ public class DriverControl extends LinearOpMode {
 
         robot.initMotors( hardwareMap );
         robot.initGyroSensor( hardwareMap );
+        robot.initRangeSensors( hardwareMap );
 
         while (!opModeIsActive() && !isStopRequested())
         {
@@ -98,6 +99,8 @@ public class DriverControl extends LinearOpMode {
             operatorDriveTrain();
 
             telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
+            telemetry.addData("rangeSensorFront", robot.rangeSensorFront.rawUltrasonic());
+            telemetry.addData("rangeSensorBack", robot.rangeSensorBack.rawUltrasonic());
             telemetry.update();
         }
 
@@ -123,7 +126,7 @@ public class DriverControl extends LinearOpMode {
         else
             SCALING_FACTOR = 0.450;
 
-        double OFFSET_POWER = 0.15;
+        double OFFSET_POWER = 0.10;
         double robotPower = SCALING_FACTOR * Math.sqrt(Math.pow(gamepad1.right_stick_x, 2) + Math.pow(gamepad1.right_stick_y, 2));
         telemetry.addData("robot power", robotPower);
 
@@ -139,7 +142,9 @@ public class DriverControl extends LinearOpMode {
         }
         else if ( (Math.abs(gamepad1.right_stick_x) > 0.01) || (Math.abs(gamepad1.right_stick_y) > 0.01))
         {
-            int joystickPostion = getDirectionAwareJoystickPosition();
+            //int joystickPostion = getDirectionAwareJoystickPosition();
+
+            int joystickPostion = getJoystickPosition();
 
             telemetry.addData("joystick DA pos", getDirectionAwareJoystickPosition());
             telemetry.addData("joystick    pos", getJoystickPosition());
@@ -182,7 +187,7 @@ public class DriverControl extends LinearOpMode {
                     motorFrontLeftPower = -OFFSET_POWER * multiplier * SIDEWAYS_MULTIPLIER;
                     break;
                 case 8:
-                    motorCenterPower = -1 * multiplier * robotPower;
+                    motorCenterPower = -1*multiplier * robotPower;
                     motorFrontRightPower = multiplier * robotPower;
                     motorFrontLeftPower = OFFSET_POWER * multiplier;
                     break;

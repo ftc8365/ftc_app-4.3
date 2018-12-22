@@ -72,15 +72,9 @@ public class Autonomous1 extends LinearOpMode {
         robot.initMotors( hardwareMap );
 
         robot.initRangeSensors( hardwareMap );
-        robot.initServos( hardwareMap );
+       // robot.initServos( hardwareMap );
         robot.initGyroSensor( hardwareMap );
 
-
-        // Starting phone servo position
-        robot.servo1.setPosition(1.00);
-        robot.servo2.setPosition(0.38);
-
-        telemetry.addData("range_sensor", robot.rangeSensorBottom.rawUltrasonic());
 
         waitForStart();
 
@@ -92,11 +86,11 @@ public class Autonomous1 extends LinearOpMode {
         // Start of program
         ///////////////////////////////////////
 
-        robot.lowerRobot();
 
+        robot.driveForwardRotation(0.5,0.40);
+        robot.turnLeftTillDegrees(115, .3);
+        robot.driveForwardRotationAlignWall(3, 0.3, 7, telemetry);
 
-        robot.turnLeftTillDegrees(30, 0.40);
-        robot.driveForwardRotation(1.6,0.40);
     }
 
 
