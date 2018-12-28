@@ -79,7 +79,7 @@ public class Robot
 
     private static final String VUFORIA_KEY = "AaaD61H/////AAABmfJ7OgkkWEWVmniO8RAqZ1cEkXF6bR9ebw4Gw+hUI8s1s5iTA9Hyri+sjoSO/ISwSWxfZCI/iAzZ0RxSQyGQ7xjWaoE4AJgn4pKLKVcOsuglHJQhjQevzdFKWX6cXq4xYL6vzwX7G7zuUP6Iw3/TzZIAj7OxYl49mA30JfoXvq/kKnhDOdM531dbRyZiaNwTGibRl5Dxd4urQ5av3EU1QyFBWR04eKWBrJGffk8bdqjAbB3QDp/7ZAMi2WfkItMOP5ghc5arNRCNt5x+xX7gSq8pMt3ZoC3XPfRNNaEbf24MgaNJXlUARsfAuycgPiY83jbX0Hrctj4wZ20wqah+FNYMqvySokw6/fDmyG0mPmel";
 
-    private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
+    public static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     public static final String LABEL_GOLD_MINERAL = "Gold Mineral";
     public static final String LABEL_SILVER_MINERAL = "Silver Mineral";
 
@@ -90,9 +90,9 @@ public class Robot
     /////////////////////
     // Declare sensors
     /////////////////////
-    ModernRoboticsI2cRangeSensor rangeSensorBottom   = null;
+    ModernRoboticsI2cRangeSensor rangeSensorBottom  = null;
     ModernRoboticsI2cRangeSensor rangeSensorFront   = null;
-    ModernRoboticsI2cRangeSensor rangeSensorBack   = null;
+    ModernRoboticsI2cRangeSensor rangeSensorBack    = null;
 
     // The IMU sensor object
     BNO055IMU imu;
@@ -105,6 +105,20 @@ public class Robot
     Servo servo3 = null;
     Servo servo4 = null;
 
+
+    boolean     forwardFacing = true;
+
+
+    public final boolean setforwardFacing(boolean forwardFacing)
+    {
+        this.forwardFacing = forwardFacing;
+        return this.forwardFacing;
+    }
+
+    public final boolean getforwardFacing()
+    {
+        return this.forwardFacing;
+    }
 
     private final void sleep(long milliseconds)
     {
@@ -142,7 +156,7 @@ public class Robot
     // Initialization Methods
     //----------------------------------------------------------------------------------------------
 
-    public void initMotors( HardwareMap hardwareMap ) {
+    public void initMotors( HardwareMap hardwareMap, boolean brake ) {
         motorFrontRight     = hardwareMap.get(DcMotor.class, "motor1");
         motorFrontLeft      = hardwareMap.get(DcMotor.class, "motor2");
         motorCenter         = hardwareMap.get(DcMotor.class, "motor3");
@@ -157,6 +171,19 @@ public class Robot
         motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         motorCenter.setDirection(DcMotor.Direction.REVERSE);
 //        motorLift.setDirection(DcMotor.Direction.FORWARD);
+
+        if (brake)
+        {
+            motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
+        else
+        {
+            motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        }
     }
 
     public void initRangeSensors( HardwareMap hardwareMap ) {
@@ -660,4 +687,5 @@ public class Robot
         this.motorFrontRight.setPower(0);
 //        this.motorLift.setPower(0);
     }
+
 }

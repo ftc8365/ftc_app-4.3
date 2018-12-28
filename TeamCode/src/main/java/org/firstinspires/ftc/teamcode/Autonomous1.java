@@ -69,7 +69,7 @@ public class Autonomous1 extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        robot.initMotors( hardwareMap );
+        robot.initMotors( hardwareMap, true );
 
         robot.initRangeSensors( hardwareMap );
        // robot.initServos( hardwareMap );

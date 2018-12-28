@@ -70,14 +70,16 @@ public class DriverControl extends LinearOpMode {
 
     Robot robot = new Robot();
 
-    double SCALING_FACTOR               = 0.30;
-    boolean forwardFacing               = true;
+    double SCALING_FACTOR       = 0.30;
+    double lastJoystickPosition = 0;
+    double robotPower           = 0.0;
+    double robotSteerPower      = 0.0;
+    boolean revUp                  = true;
 
     @Override
     public void runOpMode()
     {
-
-        robot.initMotors( hardwareMap );
+        robot.initMotors( hardwareMap, false );
         robot.initGyroSensor( hardwareMap );
         robot.initRangeSensors( hardwareMap );
 
@@ -89,13 +91,20 @@ public class DriverControl extends LinearOpMode {
 
         robot.activateGyroTracking();
 
-        this.forwardFacing = true;
-
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive() ) {
 
-            operateLiftMotor();
+            if (gamepad1.y)
+                robot.setforwardFacing(true);
+            if (gamepad1.a)
+                robot.setforwardFacing(false);
 
+            if (gamepad1.b)
+                this.revUp = true;
+            if (gamepad1.x)
+                this.revUp = false;
+
+            operateLiftMotor();
             operatorDriveTrain();
 
             telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
@@ -108,27 +117,20 @@ public class DriverControl extends LinearOpMode {
     }
 
 
-    void operatorDriveTrain() {
-
-        if (gamepad1.y)
-            this.forwardFacing = true;
-        if (gamepad1.a)
-            this.forwardFacing = false;
-
-        double multiplier = this.forwardFacing ? 1 : -1;
+    void operatorDriveTrain()
+    {
+        double multiplier = robot.getforwardFacing() ? 1 : -1;
 
         double motorFrontRightPower = 0;
-        double motorFrontLeftPower = 0;
-        double motorCenterPower = 0;
+        double motorFrontLeftPower  = 0;
+        double motorCenterPower     = 0;
 
         if (gamepad1.right_trigger != 0)
-            SCALING_FACTOR = 0.60;
+            SCALING_FACTOR = 0.70;
         else
-            SCALING_FACTOR = 0.450;
+            SCALING_FACTOR = 0.60;
 
         double OFFSET_POWER = 0.10;
-        double robotPower = SCALING_FACTOR * Math.sqrt(Math.pow(gamepad1.right_stick_x, 2) + Math.pow(gamepad1.right_stick_y, 2));
-        telemetry.addData("robot power", robotPower);
 
         double SIDEWAYS_MULTIPLIER = 1.5;
 
@@ -136,18 +138,51 @@ public class DriverControl extends LinearOpMode {
 
         if (Math.abs(x1value) > 0.1)
         {
-            motorFrontRightPower = x1value * -1 * SCALING_FACTOR;
-            motorFrontLeftPower = x1value * 1 * SCALING_FACTOR;
-            motorCenterPower = x1value * -0.5 * SCALING_FACTOR;
+            if (this.revUp) {
+                if (x1value > 0) {
+                    if (robotSteerPower < 0)
+                        robotSteerPower = 0;
+
+                    this.robotSteerPower += 0.10;
+
+                    if (robotSteerPower > x1value)
+                        robotSteerPower = x1value;
+                } else {
+                    if (robotSteerPower > 0)
+                        robotSteerPower = 0;
+
+                    this.robotSteerPower -= 0.10;
+
+                    if (robotSteerPower < x1value)
+                        robotSteerPower = x1value;
+                }
+            }
+            else
+            {
+                robotSteerPower = x1value;
+            }
+
+            motorFrontRightPower = robotSteerPower * -1 * SCALING_FACTOR;
+            motorFrontLeftPower = robotSteerPower * 1 * SCALING_FACTOR;
+            motorCenterPower = robotSteerPower * -0.5 * SCALING_FACTOR;
         }
         else if ( (Math.abs(gamepad1.right_stick_x) > 0.01) || (Math.abs(gamepad1.right_stick_y) > 0.01))
         {
+            this.robotSteerPower = 0.0;
+
+            double targetRobotPower = SCALING_FACTOR * Math.sqrt(Math.pow(gamepad1.right_stick_x, 2) + Math.pow(gamepad1.right_stick_y, 2));
+
             //int joystickPostion = getDirectionAwareJoystickPosition();
 
             int joystickPostion = getJoystickPosition();
 
             telemetry.addData("joystick DA pos", getDirectionAwareJoystickPosition());
             telemetry.addData("joystick    pos", getJoystickPosition());
+
+            if (this.revUp)
+                robotPower = getRevUpPower( joystickPostion, targetRobotPower );
+            else
+                robotPower = targetRobotPower;
 
             switch (joystickPostion)
             {
@@ -202,13 +237,45 @@ public class DriverControl extends LinearOpMode {
         robot.motorFrontLeft.setPower(motorFrontLeftPower);
         robot.motorCenter.setPower(motorCenterPower);
 
-        telemetry.addData("Robot Facing", this.forwardFacing ? "FORWARD" : "BACKWARD");
+        telemetry.addData("robot power", robotPower);
+        telemetry.addData("Robot Facing", robot.getforwardFacing() ? "FORWARD" : "BACKWARD");
         telemetry.addData("gamepad1.right_stick_y", gamepad1.right_stick_y);
         telemetry.addData("gamepad1.right_stick_x", gamepad1.right_stick_x);
-
         telemetry.addData("motorFrontRightPower", motorFrontRightPower);
         telemetry.addData("motorFrontLeftPower", motorFrontLeftPower);
         telemetry.addData("motorCenterPower", motorCenterPower);
+    }
+
+
+    double getRevUpPower(int joystickPosition, double targetRobotPower )
+    {
+        double power = robotPower;
+
+        if (targetRobotPower == 0 )
+        {
+            power = 0;
+        }
+        else if ((Math.abs(joystickPosition - lastJoystickPosition) > 1) && (Math.abs(joystickPosition - lastJoystickPosition) < 7))
+        {
+            power = 0;
+        }
+        else if (targetRobotPower > 0)
+        {
+            // Increment robot power by 5% power until targetPower is reached
+            power += 0.10;
+            if (power > targetRobotPower)
+                power = targetRobotPower;
+        }
+        else
+        {
+            // Decrement robot power by 5% power until targetPower is reached
+            power -= 0.10;
+            if (power < targetRobotPower)
+                power = targetRobotPower;
+        }
+
+        this.lastJoystickPosition = joystickPosition;
+        return power;
     }
 
     int getDirectionAwareJoystickPosition()
@@ -302,10 +369,6 @@ public class DriverControl extends LinearOpMode {
             if (gamepad2.right_stick_y < -0.5)
                 motorRPPower = -1.0;
         }
-
-//        robot.motorLift.setPower(motorRPPower);
-
-//        telemetry.addData("motorLift", motorRPPower);
     }
 
 /*
