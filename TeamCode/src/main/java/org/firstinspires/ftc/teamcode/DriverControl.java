@@ -75,6 +75,7 @@ public class DriverControl extends LinearOpMode {
     double robotPower           = 0.0;
     double robotSteerPower      = 0.0;
     boolean revUp                  = true;
+    double  initalIntakeArmPosition = 99999;
 
     @Override
     public void runOpMode()
@@ -91,6 +92,8 @@ public class DriverControl extends LinearOpMode {
 
         robot.activateGyroTracking();
 
+        this.initalIntakeArmPosition = robot.motorIntakeLeftArm.getCurrentPosition();
+
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive() ) {
 
@@ -105,7 +108,8 @@ public class DriverControl extends LinearOpMode {
                 this.revUp = false;
 
             operateLiftMotor();
-            operatorDriveTrain();
+            operateDriveTrain();
+            operateIntake();
 
             telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
             telemetry.addData("rangeSensorFront", robot.rangeSensorFront.rawUltrasonic());
@@ -116,8 +120,32 @@ public class DriverControl extends LinearOpMode {
         robot.stopAllMotors();
     }
 
+    void operateIntake()
+    {
+        double rotatingPower = 0.0;
 
-    void operatorDriveTrain()
+        if ( gamepad2.right_stick_y > 0.01 )
+        {
+            rotatingPower = 0.20;
+
+            if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 50)
+                rotatingPower = 0.00;
+            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 150)
+                rotatingPower = 0.05;
+            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 300)
+                rotatingPower = 0.10;
+        }
+        else if ( gamepad2.right_stick_y < -0.01 )
+        {
+            rotatingPower = -0.20;
+        }
+
+        telemetry.addData("Motor Intake Power", rotatingPower);
+        telemetry.addData("Motor Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
+        robot.motorIntakeLeftArm.setPower(rotatingPower);
+    }
+
+    void operateDriveTrain()
     {
         double multiplier = robot.getforwardFacing() ? 1 : -1;
 

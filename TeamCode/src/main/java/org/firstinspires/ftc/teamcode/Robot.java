@@ -65,10 +65,12 @@ public class Robot
     /////////////////////
     // Declare motors vraiables
     /////////////////////
-    public DcMotor motorFrontRight     = null;
-    public DcMotor motorFrontLeft      = null;
-    public DcMotor motorCenter         = null;
-//    public DcMotor motorLift           = null;
+    public DcMotor motorFrontRight      = null;
+    public DcMotor motorFrontLeft       = null;
+    public DcMotor motorCenter          = null;
+//    public DcMotor motorLift          = null;
+    public DcMotor motorIntakeLeftArm   = null;
+
 //    public DcMotor motorIntakeHopper   = null;
 //    public DcMotor motorIntakeSlide    = null;
 
@@ -85,7 +87,6 @@ public class Robot
 
     public VuforiaLocalizer vuforia;
     public TFObjectDetector tfod;
-
 
     /////////////////////
     // Declare sensors
@@ -162,6 +163,8 @@ public class Robot
         motorCenter         = hardwareMap.get(DcMotor.class, "motor3");
 //        motorLift           = hardwareMap.get(DcMotor.class, "motor4");
 
+        motorIntakeLeftArm = hardwareMap.get(DcMotor.class, "motor5");
+
 //        motorIntakeHopper   = hardwareMap.get(DcMotor.class, "motor6");
 //        motorIntakeSlide    = hardwareMap.get(DcMotor.class, "motor7");
 
@@ -171,6 +174,7 @@ public class Robot
         motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         motorCenter.setDirection(DcMotor.Direction.REVERSE);
 //        motorLift.setDirection(DcMotor.Direction.FORWARD);
+        motorIntakeLeftArm.setDirection(DcMotor.Direction.REVERSE);
 
         if (brake)
         {
@@ -184,15 +188,19 @@ public class Robot
             motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
             motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
+
+        motorIntakeLeftArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    public void initRangeSensors( HardwareMap hardwareMap ) {
+    public void initRangeSensors( HardwareMap hardwareMap )
+    {
         rangeSensorBottom   = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor1");
         rangeSensorFront    = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor2");
-        rangeSensorBack    = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor3");
+        rangeSensorBack     = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor3");
     }
 
-    public void initServos( HardwareMap hardwareMap ) {
+    public void initServos( HardwareMap hardwareMap )
+    {
         servo1  = hardwareMap.get(Servo.class, "servo1");
         servo2  = hardwareMap.get(Servo.class, "servo2");
         servo3  = hardwareMap.get(Servo.class, "servo3");
