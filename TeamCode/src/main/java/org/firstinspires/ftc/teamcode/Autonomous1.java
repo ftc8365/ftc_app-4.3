@@ -37,7 +37,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
+import java.util.List;
 
 
 /**
@@ -53,7 +55,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Autonomous Position 1", group="Autonomous")
+@Autonomous(name="Autonomous Gold Position", group="Autonomous")
 //@Disabled
 public class Autonomous1 extends LinearOpMode {
 
@@ -66,17 +68,30 @@ public class Autonomous1 extends LinearOpMode {
     Robot robot = new Robot();
 
 
+
     @Override
     public void runOpMode() {
 
         robot.initMotors( hardwareMap, true );
-
         robot.initRangeSensors( hardwareMap );
-       // robot.initServos( hardwareMap );
+        robot.initServos( hardwareMap );
         robot.initGyroSensor( hardwareMap );
+        robot.initTensorFlowObjectDetection( hardwareMap );
+
+        robot.servo1.setPosition(0.05);
 
 
-        waitForStart();
+        while(!opModeIsActive() && !isStopRequested())
+        {
+            telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
+            telemetry.addData("rangeSensorBottom",  robot.rangeSensorBottom.rawUltrasonic());
+            telemetry.addData("rangeSensorFront",   robot.rangeSensorFront.rawUltrasonic());
+            telemetry.addData("rangeSensorBack",    robot.rangeSensorBack.rawUltrasonic());
+
+            telemetry.addData("",  "------------------------------");
+            telemetry.addData(">", "Press Play to start");
+            telemetry.update();
+        }
 
         runtime.reset();
         //Start the logging of measured acceleration
@@ -86,12 +101,118 @@ public class Autonomous1 extends LinearOpMode {
         // Start of program
         ///////////////////////////////////////
 
+        robot.servo1.setPosition(0.40);
 
-        robot.driveForwardRotation(0.5,0.40);
-        robot.turnLeftTillDegrees(115, .3);
-        robot.driveForwardRotationAlignWall(3, 0.3, 7, telemetry);
+        if (opModeIsActive())
+        {
+            robot.activateTensorFlowObjectDetection();
 
+            while (opModeIsActive()) {
+                // getUpdatedRecognitions() will return null if no new information is available since
+                // the last time that call was made.
+                List<Recognition> updatedRecognitions = robot.tfod.getUpdatedRecognitions();
+
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Object Detected", updatedRecognitions.size());
+                    if (updatedRecognitions.size() == 3) {
+                        int goldMineralX = -1;
+                        int silverMineral1X = -1;
+                        int silverMineral2X = -1;
+                        for (Recognition recognition : updatedRecognitions)
+                        {
+                            telemetry.addData(recognition.getLabel(), "Left %.2f", recognition.getLeft());
+
+                            if (recognition.getLabel().equals(robot.LABEL_GOLD_MINERAL))
+                            {
+                                goldMineralX = (int) recognition.getTop();
+                            } else if (silverMineral1X == -1) {
+                                silverMineral1X = (int) recognition.getTop();
+                            } else {
+                                silverMineral2X = (int) recognition.getTop();
+                            }
+                        }
+
+                        if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1)
+                        {
+                            if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X)
+                            {
+                                telemetry.addData("Gold Mineral Position", "Left");
+                                leftMineral();
+                                break;
+
+                            }
+                            else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X)
+                            {
+                                telemetry.addData("Gold Mineral Position", "Right");
+                                rightMineral();
+                                break;
+                            }
+                            else
+                            {
+                                telemetry.addData("Gold Mineral Position", "Center");
+                                centerMineral();
+                                break;
+                            }
+                        }
+                    }
+                    telemetry.update();
+                }
+            }
+
+            robot.tfod.shutdown();
+        }
     }
 
 
+    void centerMineral(){
+        robot.turnLeftTillDegrees(345, 0.35, telemetry);
+
+        robot.driveForwardRotation(0.25, 0.35);
+
+        robot.turnRightTillDegrees(0, 0.35, telemetry);
+
+        robot.driveForwardRotation(2, 0.5 );
+
+        robot.turnLeftTillDegrees(245, 0.4, telemetry);
+
+        robot.driveForwardRotationAlignWall(3, 0.4, 7, telemetry);
+
+    }
+    void leftMineral(){
+        robot.turnLeftTillDegrees(330, 0.35, telemetry);
+
+        robot.driveForwardRotation(0.25, 0.35);
+
+        robot.driveForwardRotationTurn(1.75, .35, -.3);
+
+        robot.driveForwardRotation(.25, .35);
+
+        robot.driveBackwardRotation(.25, .35);
+
+        robot.turnRightTillDegrees(215, 0.4, telemetry);
+
+        robot.driveForwardRotationAlignWall(2.75, 0.4, 7, telemetry);
+
+    }
+    void rightMineral(){
+        robot.turnLeftTillDegrees(345, 0.35, telemetry);
+
+        robot.driveForwardRotation(0.25, 0.35);
+
+        robot.turnRightTillDegrees(45, 0.35, telemetry);
+
+        robot.driveForwardRotationTurn(2.5, 0.35, 0.3);
+
+        robot.driveForwardRotation(1.0, .35);
+
+        robot.driveBackwardRotation(0.1, 0.35);
+
+        robot.turnLeftTillDegrees(245, 0.4, telemetry);
+
+        //robot.driveForwardRotation(.2, .4);
+
+        robot.driveForwardRotationAlignWall(3.0, 0.4, 7, telemetry);
+
+
+    }
 }

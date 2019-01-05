@@ -74,7 +74,7 @@ public class DriverControl extends LinearOpMode {
     double lastJoystickPosition = 0;
     double robotPower           = 0.0;
     double robotSteerPower      = 0.0;
-    boolean revUp                  = true;
+    boolean rampUp                  = true;
     double  initalIntakeArmPosition = 99999;
 
     @Override
@@ -83,12 +83,17 @@ public class DriverControl extends LinearOpMode {
         robot.initMotors( hardwareMap, false );
         robot.initGyroSensor( hardwareMap );
         robot.initRangeSensors( hardwareMap );
+        robot.initServos( hardwareMap );
+
+        robot.servo1.setPosition(0.05);
 
         while (!opModeIsActive() && !isStopRequested())
         {
             telemetry.addData(">", "Press Play to start");
             telemetry.update();
         }
+
+        robot.servo1.setPosition(0.38);
 
         robot.activateGyroTracking();
 
@@ -97,23 +102,27 @@ public class DriverControl extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive() ) {
 
-            if (gamepad1.y)
+            if (gamepad1.dpad_up) {
                 robot.setforwardFacing(true);
-            if (gamepad1.a)
+            }
+
+            if (gamepad1.dpad_down) {
                 robot.setforwardFacing(false);
+            }
 
             if (gamepad1.b)
-                this.revUp = true;
+                this.rampUp = true;
             if (gamepad1.x)
-                this.revUp = false;
+                this.rampUp = false;
 
             operateLiftMotor();
             operateDriveTrain();
             operateIntake();
 
-            telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
-            telemetry.addData("rangeSensorFront", robot.rangeSensorFront.rawUltrasonic());
-            telemetry.addData("rangeSensorBack", robot.rangeSensorBack.rawUltrasonic());
+//            telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
+//            telemetry.addData("rangeSensorBottom",  robot.rangeSensorBottom.rawUltrasonic());
+//            telemetry.addData("rangeSensorFront",   robot.rangeSensorFront.rawUltrasonic());
+//            telemetry.addData("rangeSensorBack",    robot.rangeSensorBack.rawUltrasonic());
             telemetry.update();
         }
 
@@ -126,7 +135,7 @@ public class DriverControl extends LinearOpMode {
 
         if ( gamepad2.right_stick_y > 0.01 )
         {
-            rotatingPower = 0.20;
+            rotatingPower = 0.5;
 
             if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 50)
                 rotatingPower = 0.00;
@@ -137,12 +146,26 @@ public class DriverControl extends LinearOpMode {
         }
         else if ( gamepad2.right_stick_y < -0.01 )
         {
-            rotatingPower = -0.20;
+            rotatingPower = -0.5;
         }
+
+        double motorIntakeExtensionPower = 0;
+
+        if ( gamepad2.left_stick_y > 0.01 )
+        {
+            motorIntakeExtensionPower = 0.3;
+        }
+        else if ( gamepad2.left_stick_y < -0.01 )
+        {
+            motorIntakeExtensionPower = -0.3;
+        }
+
 
         telemetry.addData("Motor Intake Power", rotatingPower);
         telemetry.addData("Motor Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
         robot.motorIntakeLeftArm.setPower(rotatingPower);
+        robot.motorIntakeRightArm.setPower(rotatingPower);
+        robot.motorIntakeExtension.setPower(motorIntakeExtensionPower);
     }
 
     void operateDriveTrain()
@@ -156,7 +179,7 @@ public class DriverControl extends LinearOpMode {
         if (gamepad1.right_trigger != 0)
             SCALING_FACTOR = 0.70;
         else
-            SCALING_FACTOR = 0.60;
+            SCALING_FACTOR = 0.50;
 
         double OFFSET_POWER = 0.10;
 
@@ -164,9 +187,11 @@ public class DriverControl extends LinearOpMode {
 
         double x1value = gamepad1.left_stick_x;
 
-        if (Math.abs(x1value) > 0.1)
+        if (Math.abs(x1value) > 0.01)
         {
-            if (this.revUp) {
+            if (this.rampUp)
+            {
+                // Turning right
                 if (x1value > 0) {
                     if (robotSteerPower < 0)
                         robotSteerPower = 0;
@@ -176,6 +201,7 @@ public class DriverControl extends LinearOpMode {
                     if (robotSteerPower > x1value)
                         robotSteerPower = x1value;
                 } else {
+                    // Turning left
                     if (robotSteerPower > 0)
                         robotSteerPower = 0;
 
@@ -185,14 +211,10 @@ public class DriverControl extends LinearOpMode {
                         robotSteerPower = x1value;
                 }
             }
-            else
-            {
-                robotSteerPower = x1value;
-            }
 
-            motorFrontRightPower = robotSteerPower * -1 * SCALING_FACTOR;
-            motorFrontLeftPower = robotSteerPower * 1 * SCALING_FACTOR;
-            motorCenterPower = robotSteerPower * -0.5 * SCALING_FACTOR;
+            motorFrontRightPower    = robotSteerPower * -1.0 * SCALING_FACTOR;
+            motorFrontLeftPower     = robotSteerPower *  1.0 * SCALING_FACTOR;
+            motorCenterPower        = robotSteerPower * -0.5 * SCALING_FACTOR;
         }
         else if ( (Math.abs(gamepad1.right_stick_x) > 0.01) || (Math.abs(gamepad1.right_stick_y) > 0.01))
         {
@@ -207,7 +229,7 @@ public class DriverControl extends LinearOpMode {
             telemetry.addData("joystick DA pos", getDirectionAwareJoystickPosition());
             telemetry.addData("joystick    pos", getJoystickPosition());
 
-            if (this.revUp)
+            if (this.rampUp)
                 robotPower = getRevUpPower( joystickPostion, targetRobotPower );
             else
                 robotPower = targetRobotPower;

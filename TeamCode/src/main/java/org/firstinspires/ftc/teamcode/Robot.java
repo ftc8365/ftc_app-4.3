@@ -70,6 +70,8 @@ public class Robot
     public DcMotor motorCenter          = null;
 //    public DcMotor motorLift          = null;
     public DcMotor motorIntakeLeftArm   = null;
+    public DcMotor motorIntakeRightArm  = null;
+    public DcMotor motorIntakeExtension = null;
 
 //    public DcMotor motorIntakeHopper   = null;
 //    public DcMotor motorIntakeSlide    = null;
@@ -108,6 +110,8 @@ public class Robot
 
 
     boolean     forwardFacing = true;
+
+    boolean distanceAchieved = false;
 
 
     public final boolean setforwardFacing(boolean forwardFacing)
@@ -164,6 +168,9 @@ public class Robot
 //        motorLift           = hardwareMap.get(DcMotor.class, "motor4");
 
         motorIntakeLeftArm = hardwareMap.get(DcMotor.class, "motor5");
+        motorIntakeRightArm = hardwareMap.get(DcMotor.class, "motor6");
+        motorIntakeExtension = hardwareMap.get(DcMotor.class, "motor7");
+
 
 //        motorIntakeHopper   = hardwareMap.get(DcMotor.class, "motor6");
 //        motorIntakeSlide    = hardwareMap.get(DcMotor.class, "motor7");
@@ -175,6 +182,8 @@ public class Robot
         motorCenter.setDirection(DcMotor.Direction.REVERSE);
 //        motorLift.setDirection(DcMotor.Direction.FORWARD);
         motorIntakeLeftArm.setDirection(DcMotor.Direction.REVERSE);
+        motorIntakeRightArm.setDirection(DcMotor.Direction.FORWARD);
+        motorIntakeExtension.setDirection(DcMotor.Direction.FORWARD);
 
         if (brake)
         {
@@ -190,6 +199,8 @@ public class Robot
         }
 
         motorIntakeLeftArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorIntakeRightArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
     }
 
     public void initRangeSensors( HardwareMap hardwareMap )
@@ -202,9 +213,9 @@ public class Robot
     public void initServos( HardwareMap hardwareMap )
     {
         servo1  = hardwareMap.get(Servo.class, "servo1");
-        servo2  = hardwareMap.get(Servo.class, "servo2");
-        servo3  = hardwareMap.get(Servo.class, "servo3");
-        servo4  = hardwareMap.get(Servo.class, "servo4");
+        //servo2  = hardwareMap.get(Servo.class, "servo2");
+        //servo3  = hardwareMap.get(Servo.class, "servo3");
+        //servo4  = hardwareMap.get(Servo.class, "servo4");
     }
 
 
@@ -290,6 +301,34 @@ public class Robot
         motorCenter.setPower(0);
     }
 
+    public void driveForwardRotationTurn( double rotation, double targetPower, double centerPower )
+    {
+        int initPosition = motorFrontRight.getCurrentPosition();
+
+        boolean cont = true;
+        double power = 0.05;
+
+        motorFrontRight.setPower( power );
+        motorFrontLeft.setPower( power );
+        motorCenter.setPower( centerPower );
+
+        while (cont)
+        {
+            if (motorFrontRight.getCurrentPosition() - initPosition >= 1000 * rotation)
+                cont = false;
+
+            if (power < targetPower)
+                power += 0.02;
+
+            motorFrontRight.setPower( power );
+            motorFrontLeft.setPower( power );
+        }
+
+        motorFrontRight.setPower(0);
+        motorFrontLeft.setPower(0);
+        motorCenter.setPower(0);
+    }
+
     ////////////////////////////////////////////////////////
     public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
     {
@@ -321,31 +360,52 @@ public class Robot
 
             if (sensorFront > 100)
                 continue;
+            /*if (sensorFront == distance || sensorBack == distance && !distanceAchieved)
+                distanceAchieved = true;
 
-            if (sensorFront >= distance + 3)
-            {
-                motorFrontRight.setPower( -0.10 );
-                motorFrontLeft.setPower( 0.10 );
-                motorCenter.setPower(0.4);
+            if (distanceAchieved){
+                if (sensorFront >= distance + 3) {
+                    motorCenter.setPower(0.4);
+                } else if (sensorFront <= distance - 3) {
+                    motorCenter.setPower(-0.4);
+                }
+                else
+                {
+                    motorFrontRight.setPower( power );
+                    motorFrontLeft.setPower( power );
+
+
+                    if (motorCenterPower > 0.20)
+                        motorCenterPower = 0.20;
+
+                    motorCenter.setPower( motorCenterPower );
+
+                }
             }
-            else if (sensorFront <= distance - 3)
-            {
-                motorFrontRight.setPower( 0.10 );
-                motorFrontLeft.setPower( -0.10 );
-                motorCenter.setPower( -0.4 );
-            }
-            else
-            {
-                motorFrontRight.setPower( power );
-                motorFrontLeft.setPower( power );
+            else {*/
+                if (sensorFront >= distance + 3) {
+                    motorFrontRight.setPower(-0.10);
+                    motorFrontLeft.setPower(0.10);
+                    motorCenter.setPower(0.4);
+                } else if (sensorFront <= distance - 3) {
+                    motorFrontRight.setPower(0.10);
+                    motorFrontLeft.setPower(-0.10);
+                    motorCenter.setPower(-0.4);
+                }
+                else
+                {
+                    motorFrontRight.setPower( power );
+                    motorFrontLeft.setPower( power );
 
 
-                if (motorCenterPower > 0.20)
-                    motorCenterPower = 0.20;
+                    if (motorCenterPower > 0.20)
+                        motorCenterPower = 0.20;
 
-                motorCenter.setPower( motorCenterPower );
+                    motorCenter.setPower( motorCenterPower );
 
-            }
+                }
+//            }
+
 
             telemetry.addData("sensorFront", sensorFront);
             telemetry.addData("sensorBack", sensorBack);
@@ -583,32 +643,43 @@ public class Robot
     ///////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void turnRightTillDegrees( int targetDegrees, double targetPower )
+    public void turnRightTillDegrees( int targetDegrees, double targetPower, Telemetry telemetry )
     {
-        double startHeading = getCurrentHeadingRightTurn();
-
-        int offset = 0;
-        double power = 0.05;
-
         boolean continueToTurn = true;
+        double power = 0.05;
+        double currentHeading = 0;
+        double distanceToGo = 0;
 
         while ( continueToTurn )
         {
-            double currentHeading = getCurrentHeadingRightTurn();
+            currentHeading = getCurrentPositionInDegrees();
+            if (currentHeading > 180 && targetDegrees < 180)
+                currentHeading -= 360;
 
-            if ( ( (currentHeading + offset ) >= targetDegrees ))
+            distanceToGo = targetDegrees - currentHeading;
+
+            if ( distanceToGo > 0.0 )
             {
-                continueToTurn = false;
-            }
-            else
-            {
+                // Ramp up power by 3%
                 if (power < targetPower)
-                    power += 0.02;
+                    power += 0.03;
+
+                // Ramp down power
+                if ( distanceToGo < 15 )
+                    power = 0.20;
 
                 motorFrontRight.setPower( power * -1 );
                 motorFrontLeft.setPower( power );
                 motorCenter.setPower( power * -0.50 ) ;
             }
+            else
+            {
+                continueToTurn = false;
+            }
+
+            telemetry.addData("currentHeading", currentHeading);
+            telemetry.addData( "distanceToGo", distanceToGo);
+            telemetry.update();
         }
 
         // Stop motors
@@ -616,34 +687,44 @@ public class Robot
         motorFrontLeft.setPower(0);
         motorCenter.setPower(0);
 
+        telemetry.addData("currentHeading", currentHeading);
+        telemetry.addData( "distanceToGo", distanceToGo);
+        telemetry.addData( "done?", "yes");
+        telemetry.update();
+
     }
     ///////////////////////////////////////////////////////////////////////////////////////////
 
-    public void turnLeftTillDegrees( int targetDegrees, double targetPower )
+    public void turnLeftTillDegrees( int targetDegrees, double targetPower, Telemetry telemetry )
     {
-        double startHeading = getCurrentHeadingLeftTurn();
-
-        int offset = 0;
-
         boolean continueToTurn = true;
         double power = 0.05;
 
         while ( continueToTurn )
         {
-            double currentHeading = getCurrentHeadingLeftTurn();
+            double currentHeading = getCurrentPositionInDegrees();
+            if (currentHeading < 30)
+                currentHeading += 360;
 
-            if ( ( (currentHeading + offset ) >= targetDegrees ))
+            double distanceToGo = currentHeading - targetDegrees;
+
+            if ( distanceToGo > 0.0 )
             {
-                continueToTurn = false;
-            }
-            else
-            {
+                // Ramp up power by 3%
                 if (power < targetPower)
-                    power += 0.02;
+                    power += 0.03;
+
+                // Ramp down power
+               // if ( distanceToGo < 15 )
+                 //   power = 0.20;
 
                 motorFrontRight.setPower(power );
                 motorFrontLeft.setPower(power * -1 );
                 motorCenter.setPower(power * 0.5) ;
+            }
+            else
+            {
+                continueToTurn = false;
             }
         }
 
