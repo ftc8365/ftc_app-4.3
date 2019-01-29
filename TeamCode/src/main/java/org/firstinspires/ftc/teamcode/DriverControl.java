@@ -65,7 +65,8 @@ import java.util.Locale;
  */
 
 @TeleOp(name="DriverControl", group="TeleOp")
-//@Disabled
+//@Disabled            robot.servoIntake.setPosition(1);
+
 public class DriverControl extends LinearOpMode {
 
     Robot robot = new Robot();
@@ -82,10 +83,12 @@ public class DriverControl extends LinearOpMode {
     {
         robot.initMotors( hardwareMap, false );
         robot.initGyroSensor( hardwareMap );
-        robot.initRangeSensors( hardwareMap );
+        robot.initSensors( hardwareMap );
         robot.initServos( hardwareMap );
 
-        robot.servo1.setPosition(0.05);
+        robot.setPhoneStartingPostion();
+
+//        robot.servoIntake.setPosition(1);
 
         while (!opModeIsActive() && !isStopRequested())
         {
@@ -93,7 +96,7 @@ public class DriverControl extends LinearOpMode {
             telemetry.update();
         }
 
-        robot.servo1.setPosition(0.38);
+//        robot.servoIntake.setPosition(0);
 
         robot.activateGyroTracking();
 
@@ -102,22 +105,21 @@ public class DriverControl extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive() ) {
 
-            if (gamepad1.dpad_up) {
-                robot.setforwardFacing(true);
-            }
+            if (gamepad1.y)
+                robot.setforwardFacing( !robot.getforwardFacing() );
 
-            if (gamepad1.dpad_down) {
-                robot.setforwardFacing(false);
-            }
+            if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right)
+                operateLiftMotor();
+            else
+                operateDriveTrain();
 
-            if (gamepad1.b)
-                this.rampUp = true;
-            if (gamepad1.x)
-                this.rampUp = false;
-
-            operateLiftMotor();
-            operateDriveTrain();
             operateIntake();
+
+//            if (robot.digitalTouch.getState() == true) {
+//                telemetry.addData("Digital Touch", "Is Not Pressed");
+//            } else {
+//                telemetry.addData("Digital Touch", "Is Pressed");
+//            }
 
 //            telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
 //            telemetry.addData("rangeSensorBottom",  robot.rangeSensorBottom.rawUltrasonic());
@@ -135,37 +137,64 @@ public class DriverControl extends LinearOpMode {
 
         if ( gamepad2.right_stick_y > 0.01 )
         {
-            rotatingPower = 0.5;
+            rotatingPower = 0.50;
 
-            if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 50)
-                rotatingPower = 0.00;
-            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 150)
-                rotatingPower = 0.05;
-            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 300)
-                rotatingPower = 0.10;
+//            if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 50)
+//                rotatingPower = 0.00;
+//            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 150)
+//                rotatingPower = 0.05;
+//            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 300)
+//                rotatingPower = 0.10;
         }
         else if ( gamepad2.right_stick_y < -0.01 )
         {
-            rotatingPower = -0.5;
+            rotatingPower = -1.0;
         }
 
         double motorIntakeExtensionPower = 0;
 
         if ( gamepad2.left_stick_y > 0.01 )
         {
-            motorIntakeExtensionPower = 0.3;
+            motorIntakeExtensionPower = 0.8;
         }
         else if ( gamepad2.left_stick_y < -0.01 )
         {
-            motorIntakeExtensionPower = -0.3;
+            motorIntakeExtensionPower = -0.8;
+        }
+
+        if (gamepad2.dpad_right) {
+            robot.extendIntake();
+        }
+
+        if (gamepad2.dpad_left) {
+            robot.retractIntake();
+        }
+
+        if (gamepad2.dpad_up) {
+            robot.raiseIntake();
+            telemetry.addData("Dpad Up", "Done");
+        }
+
+        if (gamepad2.dpad_down) {
+            robot.lowerIntake();
+            telemetry.addData("Dpad Down", "Done");
         }
 
 
         telemetry.addData("Motor Intake Power", rotatingPower);
-        telemetry.addData("Motor Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
+        telemetry.addData("Motor Left Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
+        telemetry.addData("Motor Right Intake Position", robot.motorIntakeRightArm.getCurrentPosition());
         robot.motorIntakeLeftArm.setPower(rotatingPower);
         robot.motorIntakeRightArm.setPower(rotatingPower);
         robot.motorIntakeExtension.setPower(motorIntakeExtensionPower);
+
+
+        if (gamepad2.left_trigger > 0)
+            robot.servoIntake.setPosition(0);
+        else if (gamepad2.right_trigger > 0 )
+            robot.servoIntake.setPosition(1);
+        else
+            robot.servoIntake.setPosition(0.5);
     }
 
     void operateDriveTrain()
@@ -410,15 +439,16 @@ public class DriverControl extends LinearOpMode {
 
     void operateLiftMotor()
     {
-       double motorRPPower = 0;
+       double motorPower = 0;
 
-        if (gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.dpad_left || gamepad2.dpad_right) {
-            if (gamepad2.right_stick_y > 0.5)
-                motorRPPower = 1.0;
+        if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right) {
+            if (gamepad1.right_stick_y > 0.1)
+                motorPower = 1.0;
 
-            if (gamepad2.right_stick_y < -0.5)
-                motorRPPower = -1.0;
+            if (gamepad1.right_stick_y < -0.1)
+                motorPower = -1.0;
         }
+        robot.motorLift.setPower(motorPower);
     }
 
 /*

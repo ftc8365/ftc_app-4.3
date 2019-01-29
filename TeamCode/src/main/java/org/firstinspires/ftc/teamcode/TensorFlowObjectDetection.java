@@ -61,6 +61,8 @@ public class TensorFlowObjectDetection extends LinearOpMode {
     public void runOpMode() {
 
         robot.initTensorFlowObjectDetection( hardwareMap );
+        robot.initServos( hardwareMap );
+        robot.setPhoneStartingPostion();
 
         while (!opModeIsActive() && !isStopRequested())
         {
@@ -71,6 +73,7 @@ public class TensorFlowObjectDetection extends LinearOpMode {
         if (opModeIsActive())
         {
             robot.activateTensorFlowObjectDetection();
+            robot.setPhoneScanPosition();
 
             while (opModeIsActive()) {
                 // getUpdatedRecognitions() will return null if no new information is available since

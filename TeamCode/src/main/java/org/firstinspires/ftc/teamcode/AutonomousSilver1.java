@@ -29,10 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
@@ -55,9 +53,9 @@ import java.util.List;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Autonomous Gold Position", group="Autonomous")
+@Autonomous(name="Autonomous Silver Position", group="Autonomous")
 //@Disabled
-public class Autonomous1 extends LinearOpMode {
+public class AutonomousSilver1 extends LinearOpMode {
 
     //////////////////////////////////////////////////////////////////////
     // Declare OpMode members
@@ -73,12 +71,12 @@ public class Autonomous1 extends LinearOpMode {
     public void runOpMode() {
 
         robot.initMotors( hardwareMap, true );
-        robot.initRangeSensors( hardwareMap );
+        robot.initSensors( hardwareMap );
         robot.initServos( hardwareMap );
         robot.initGyroSensor( hardwareMap );
         robot.initTensorFlowObjectDetection( hardwareMap );
 
-        robot.servo1.setPosition(0.05);
+        robot.setPhoneStartingPostion();
 
 
         while(!opModeIsActive() && !isStopRequested())
@@ -101,11 +99,14 @@ public class Autonomous1 extends LinearOpMode {
         // Start of program
         ///////////////////////////////////////
 
-        robot.servo1.setPosition(0.40);
+        robot.setPhoneScanPosition();
 
         if (opModeIsActive())
         {
             robot.activateTensorFlowObjectDetection();
+
+
+            robot.lowerRobot();
 
             while (opModeIsActive()) {
                 // getUpdatedRecognitions() will return null if no new information is available since
@@ -171,11 +172,19 @@ public class Autonomous1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(0, 0.35, telemetry);
 
-        robot.driveForwardRotation(2, 0.5 );
+        robot.driveForwardRotation(1.25, 0.5 );
+
+        robot.driveBackwardRotation(0.75, 0.35);
+
+        robot.driveLeftTillRotation(1.75, 0.35);
 
         robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
-        robot.driveForwardRotationAlignWall(3, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
+
+        robot.dropMarker();
+
+        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
 
     }
     void leftMineral(){
@@ -183,15 +192,22 @@ public class Autonomous1 extends LinearOpMode {
 
         robot.driveForwardRotation(0.25, 0.35);
 
-        robot.driveForwardRotationTurn(1.75, .35, -.3);
+        robot.driveForwardRotationTurn(1, .35, -.3);
 
-        robot.driveForwardRotation(.25, .35);
+        robot.driveBackwardRotation(0.75, 0.35);
 
-        robot.driveBackwardRotation(.25, .35);
+        robot.driveLeftTillRotation(1.75, 0.35);
 
-        robot.turnRightTillDegrees(215, 0.4, telemetry);
+        robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
-        robot.driveForwardRotationAlignWall(2.75, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
+
+        robot.dropMarker();
+
+        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
+
+
+
 
     }
     void rightMineral(){
@@ -201,17 +217,20 @@ public class Autonomous1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(45, 0.35, telemetry);
 
-        robot.driveForwardRotationTurn(2.5, 0.35, 0.3);
+        robot.driveForwardRotationTurn(1.75, 0.35, 0.3);
 
-        robot.driveForwardRotation(1.0, .35);
+        robot.driveBackwardRotation(0.75, 0.35);
 
-        robot.driveBackwardRotation(0.1, 0.35);
+        robot.driveLeftTillRotation(1.75, 0.35);
 
         robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
-        //robot.driveForwardRotation(.2, .4);
+        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
 
-        robot.driveForwardRotationAlignWall(3.0, 0.4, 7, telemetry);
+        robot.dropMarker();
+
+        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
+
 
 
     }

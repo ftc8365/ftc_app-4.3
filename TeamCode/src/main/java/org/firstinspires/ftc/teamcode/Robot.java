@@ -35,6 +35,7 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.modernrobotics.ModernRoboticsI2cRangeSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -63,12 +64,12 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 public class Robot
 {
     /////////////////////
-    // Declare motors vraiables
+    // Declare motors variables
     /////////////////////
     public DcMotor motorFrontRight      = null;
     public DcMotor motorFrontLeft       = null;
     public DcMotor motorCenter          = null;
-//    public DcMotor motorLift          = null;
+    public DcMotor motorLift            = null;
     public DcMotor motorIntakeLeftArm   = null;
     public DcMotor motorIntakeRightArm  = null;
     public DcMotor motorIntakeExtension = null;
@@ -99,12 +100,13 @@ public class Robot
 
     // The IMU sensor object
     BNO055IMU imu;
+    public DigitalChannel digitalTouch;  // Hardware Device Object
 
     /////////////////////
     // Declare servos
     /////////////////////
-    Servo servo1 = null;
-    Servo servo2 = null;
+    Servo servoPhone = null;
+    Servo servoIntake = null;
     Servo servo3 = null;
     Servo servo4 = null;
 
@@ -136,25 +138,22 @@ public class Robot
 
     public void setPhoneStartingPostion()
     {
-        servo1.setPosition(1.00);
-        servo2.setPosition(0.38);
+        servoPhone.setPosition(1);
     }
 
-    public void setPhoneScanPosition() {
-        // Rotate servo to positions photo in the front tiled
-        setServoPosition(servo2, 0.55);
-        sleep(500);
-        setServoPosition(servo1, 0.40);
+    public void setPhoneScanPosition()
+    {
+        servoPhone.setPosition(.50);
     }
 
     public void lowerRobot()
     {
-     //   while (rangeSensorBottom.rawUltrasonic() > 6) {
-     //       motorLift.setPower(0.4);
-     //   }
+        while (rangeSensorBottom.rawUltrasonic() >= 5) {
+            motorLift.setPower(1.0);
+        }
 
-       // motorLift.setPower(0.0);
-       // sleep(150);
+        motorLift.setPower(0.0);
+        //   sleep(150);
     }
 
     //----------------------------------------------------------------------------------------------
@@ -165,7 +164,7 @@ public class Robot
         motorFrontRight     = hardwareMap.get(DcMotor.class, "motor1");
         motorFrontLeft      = hardwareMap.get(DcMotor.class, "motor2");
         motorCenter         = hardwareMap.get(DcMotor.class, "motor3");
-//        motorLift           = hardwareMap.get(DcMotor.class, "motor4");
+        motorLift           = hardwareMap.get(DcMotor.class, "motor4");
 
         motorIntakeLeftArm = hardwareMap.get(DcMotor.class, "motor5");
         motorIntakeRightArm = hardwareMap.get(DcMotor.class, "motor6");
@@ -180,7 +179,8 @@ public class Robot
         motorFrontRight.setDirection(DcMotor.Direction.REVERSE);
         motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         motorCenter.setDirection(DcMotor.Direction.REVERSE);
-//        motorLift.setDirection(DcMotor.Direction.FORWARD);
+        motorLift.setDirection(DcMotor.Direction.FORWARD);
+
         motorIntakeLeftArm.setDirection(DcMotor.Direction.REVERSE);
         motorIntakeRightArm.setDirection(DcMotor.Direction.FORWARD);
         motorIntakeExtension.setDirection(DcMotor.Direction.FORWARD);
@@ -203,16 +203,22 @@ public class Robot
 
     }
 
-    public void initRangeSensors( HardwareMap hardwareMap )
+    public void initSensors( HardwareMap hardwareMap )
     {
         rangeSensorBottom   = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor1");
         rangeSensorFront    = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor2");
         rangeSensorBack     = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor3");
+
+//        digitalTouch = hardwareMap.get(DigitalChannel.class, "Touch1");
+
+        //digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+
     }
 
     public void initServos( HardwareMap hardwareMap )
     {
-        servo1  = hardwareMap.get(Servo.class, "servo1");
+        servoPhone  = hardwareMap.get(Servo.class, "servo1");
+        servoIntake = hardwareMap.get(Servo.class, "servo2");
         //servo2  = hardwareMap.get(Servo.class, "servo2");
         //servo3  = hardwareMap.get(Servo.class, "servo3");
         //servo4  = hardwareMap.get(Servo.class, "servo4");
@@ -330,6 +336,69 @@ public class Robot
     }
 
     ////////////////////////////////////////////////////////
+    public void driveBackwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry) {
+        motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        int initPosition = motorFrontRight.getCurrentPosition();
+
+        boolean cont = true;
+        double power = -0.05;
+
+        motorFrontRight.setPower(power);
+        motorFrontLeft.setPower(power);
+        motorCenter.setPower(0.0);
+
+        while (cont) {
+            if (motorFrontRight.getCurrentPosition() - initPosition <= -1000 * rotation)
+                cont = false;
+
+            if (power > -targetPower)
+                power -= 0.02;
+
+            double sensorFront = this.rangeSensorFront.rawUltrasonic();
+            double sensorBack = this.rangeSensorBack.rawUltrasonic();
+
+            double motorCenterPower = (sensorBack - sensorFront) * 0.05;
+
+            if (sensorFront > 100)
+                continue;
+
+            double sensorDistance = Math.min(sensorFront, sensorBack);
+
+
+            if (sensorDistance >= distance + 3)  {
+                motorFrontRight.setPower(-0.10);
+                motorFrontLeft.setPower(0.10);
+                motorCenter.setPower(0.4);
+            } else if (sensorDistance <= distance - 3) {
+                motorFrontRight.setPower(0.10);
+                motorFrontLeft.setPower(-0.10);
+                motorCenter.setPower(-0.4);
+            } else {
+                motorFrontRight.setPower(power);
+                motorFrontLeft.setPower(power);
+
+
+                if (motorCenterPower > 0.20)
+                    motorCenterPower = 0.20;
+
+                motorCenter.setPower(motorCenterPower);
+
+            }
+        }
+    }
+    public void dropMarker(){
+        this.servoIntake.setPosition(0);    // out take
+        sleep(1000);
+        this.servoIntake.setPosition(1);    //intake
+        sleep(1000);
+        this.servoIntake.setPosition(0.5);  //stops intake
+
+
+    }
+
     public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
     {
         motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -776,5 +845,64 @@ public class Robot
         this.motorFrontRight.setPower(0);
 //        this.motorLift.setPower(0);
     }
+
+
+
+    public void extendIntake()
+    {
+        double startingPos = this.motorIntakeExtension.getCurrentPosition();
+        while (this.motorIntakeExtension.getCurrentPosition() >= startingPos - 600) {
+            this.motorIntakeExtension.setPower(-0.5);
+        }
+
+        this.motorIntakeExtension.setPower(0);
+    }
+
+    public void retractIntake()
+    {
+        double startingPos = this.motorIntakeExtension.getCurrentPosition();
+        while (this.motorIntakeExtension.getCurrentPosition() <= startingPos + 600) {
+            this.motorIntakeExtension.setPower(0.5);
+        }
+
+        this.motorIntakeExtension.setPower(0);
+    }
+
+
+    public void raiseIntake()
+    {
+        double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
+
+        while (this.motorIntakeLeftArm.getCurrentPosition() >= startingPos - 200) {
+            this.motorIntakeLeftArm.setPower(-1.0);
+            this.motorIntakeRightArm.setPower(-1.0);
+        }
+
+        while (this.motorIntakeLeftArm.getCurrentPosition() >= startingPos - 300) {
+            this.motorIntakeLeftArm.setPower(-0.5);
+            this.motorIntakeRightArm.setPower(-0.5);
+        }
+
+
+        this.motorIntakeLeftArm.setPower(0);
+        this.motorIntakeRightArm.setPower(0);
+
+
+    }
+
+
+    public void lowerIntake()
+    {
+        double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
+        while (this.motorIntakeLeftArm.getCurrentPosition() <= startingPos + 150) {
+            this.motorIntakeLeftArm.setPower(1);
+            this.motorIntakeRightArm.setPower(1);
+        }
+        this.motorIntakeLeftArm.setPower(-0.3);
+        this.motorIntakeRightArm.setPower(-0.3);
+
+
+    }
+
 
 }
