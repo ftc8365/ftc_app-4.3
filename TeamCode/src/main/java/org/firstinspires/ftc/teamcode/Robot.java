@@ -51,9 +51,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
+
+import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
@@ -90,6 +93,15 @@ public class Robot
 
     public VuforiaLocalizer vuforia;
     public TFObjectDetector tfod;
+
+    public enum MineralLocation
+    {
+        UNKNOWN,
+        RIGHT,
+        CENTER,
+        LEFT
+    };
+
 
     /////////////////////
     // Declare sensors
@@ -143,7 +155,7 @@ public class Robot
 
     public void setPhoneScanPosition()
     {
-        servoPhone.setPosition(.50);
+        servoPhone.setPosition(0.52);
     }
 
     public void lowerRobot()
@@ -389,14 +401,15 @@ public class Robot
             }
         }
     }
+
+    public void lockMarker(){
+        this.servoIntake.setPosition(0.5);  //stops intake
+    }
+
     public void dropMarker(){
         this.servoIntake.setPosition(0);    // out take
-        sleep(1000);
-        this.servoIntake.setPosition(1);    //intake
-        sleep(1000);
+        sleep(1500);
         this.servoIntake.setPosition(0.5);  //stops intake
-
-
     }
 
     public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
@@ -900,7 +913,64 @@ public class Robot
         }
         this.motorIntakeLeftArm.setPower(-0.3);
         this.motorIntakeRightArm.setPower(-0.3);
+    }
 
+
+    public MineralLocation detectMineral(Telemetry telemetry)
+    {
+        MineralLocation location = MineralLocation.UNKNOWN;
+
+        // getUpdatedRecognitions() will return null if no new information is available since
+        // the last time that call was made.
+        List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+
+        if (updatedRecognitions == null)
+            return MineralLocation.UNKNOWN;
+
+        int goldMineralYPos = 99999;
+        int silverMineral1YPos = 99999;
+        int silverMineral2YPos = 99999;
+
+        telemetry.addData("# Object Detected", updatedRecognitions.size());
+
+        // Determining Y coordinate of each mineral detected
+        // Y position increases as it goes from right to left
+
+        for (Recognition recognition : updatedRecognitions)
+        {
+            telemetry.addData(recognition.getLabel(), "Y = %.2f", recognition.getTop());
+
+            if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                goldMineralYPos = (int) recognition.getTop();
+            } else if (silverMineral1YPos == 99999) {
+                silverMineral1YPos = (int) recognition.getTop();
+            }
+            else {
+                silverMineral2YPos = (int) recognition.getTop();
+            }
+        }
+
+        if ( goldMineralYPos < 99999 && silverMineral1YPos < 99999 &&
+                goldMineralYPos < silverMineral1YPos &&
+                goldMineralYPos < silverMineral2YPos )
+        {
+            location = MineralLocation.RIGHT;
+        }
+        else if ( goldMineralYPos < 99999 && silverMineral1YPos < 99999 &&
+                  goldMineralYPos > silverMineral1YPos &&
+                  goldMineralYPos < silverMineral2YPos )
+        {
+            location = MineralLocation.CENTER;
+        }
+        else if ( silverMineral1YPos < 99999 && silverMineral2YPos < 99999 &&
+                  goldMineralYPos > silverMineral1YPos &&
+                  goldMineralYPos > silverMineral2YPos )
+        {
+            location = MineralLocation.LEFT;
+        }
+
+        telemetry.addData("Gold Mineral Position", location);
+        return location;
 
     }
 

@@ -91,81 +91,44 @@ public class AutonomousSilver1 extends LinearOpMode {
             telemetry.update();
         }
 
-        runtime.reset();
-        //Start the logging of measured acceleration
-        robot.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
-
         ///////////////////////////////////////
         // Start of program
         ///////////////////////////////////////
 
+        runtime.reset();
+
+        robot.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
+
+        robot.lockMarker();
+
         robot.setPhoneScanPosition();
 
-        if (opModeIsActive())
+        robot.activateTensorFlowObjectDetection();
+
+        robot.lowerRobot();
+
+        Robot.MineralLocation mineralLocation = robot.detectMineral( telemetry );
+
+        switch (mineralLocation)
         {
-            robot.activateTensorFlowObjectDetection();
-
-
-            robot.lowerRobot();
-
-            while (opModeIsActive()) {
-                // getUpdatedRecognitions() will return null if no new information is available since
-                // the last time that call was made.
-                List<Recognition> updatedRecognitions = robot.tfod.getUpdatedRecognitions();
-
-                if (updatedRecognitions != null) {
-                    telemetry.addData("# Object Detected", updatedRecognitions.size());
-                    if (updatedRecognitions.size() == 3) {
-                        int goldMineralX = -1;
-                        int silverMineral1X = -1;
-                        int silverMineral2X = -1;
-                        for (Recognition recognition : updatedRecognitions)
-                        {
-                            telemetry.addData(recognition.getLabel(), "Left %.2f", recognition.getLeft());
-
-                            if (recognition.getLabel().equals(robot.LABEL_GOLD_MINERAL))
-                            {
-                                goldMineralX = (int) recognition.getTop();
-                            } else if (silverMineral1X == -1) {
-                                silverMineral1X = (int) recognition.getTop();
-                            } else {
-                                silverMineral2X = (int) recognition.getTop();
-                            }
-                        }
-
-                        if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1)
-                        {
-                            if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X)
-                            {
-                                telemetry.addData("Gold Mineral Position", "Left");
-                                leftMineral();
-                                break;
-
-                            }
-                            else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X)
-                            {
-                                telemetry.addData("Gold Mineral Position", "Right");
-                                rightMineral();
-                                break;
-                            }
-                            else
-                            {
-                                telemetry.addData("Gold Mineral Position", "Center");
-                                centerMineral();
-                                break;
-                            }
-                        }
-                    }
-                    telemetry.update();
-                }
-            }
-
-            robot.tfod.shutdown();
+            case LEFT:
+                leftMineral();
+                break;
+            case CENTER:
+                centerMineral();
+                break;
+            case RIGHT:
+                rightMineral();
+                break;
         }
+
+        robot.tfod.shutdown();
+
     }
 
 
-    void centerMineral(){
+    void centerMineral()
+    {
         robot.turnLeftTillDegrees(345, 0.35, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
@@ -187,7 +150,9 @@ public class AutonomousSilver1 extends LinearOpMode {
         robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
 
     }
-    void leftMineral(){
+
+    void leftMineral()
+    {
         robot.turnLeftTillDegrees(330, 0.35, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
@@ -206,11 +171,10 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
 
-
-
-
     }
-    void rightMineral(){
+
+    void rightMineral()
+    {
         robot.turnLeftTillDegrees(345, 0.35, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
@@ -230,8 +194,6 @@ public class AutonomousSilver1 extends LinearOpMode {
         robot.dropMarker();
 
         robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
-
-
 
     }
 }

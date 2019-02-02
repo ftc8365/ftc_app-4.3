@@ -63,6 +63,7 @@ public class TensorFlowObjectDetection extends LinearOpMode {
         robot.initTensorFlowObjectDetection( hardwareMap );
         robot.initServos( hardwareMap );
         robot.setPhoneStartingPostion();
+        robot.lockMarker();
 
         while (!opModeIsActive() && !isStopRequested())
         {
@@ -72,52 +73,15 @@ public class TensorFlowObjectDetection extends LinearOpMode {
 
         if (opModeIsActive())
         {
-            robot.activateTensorFlowObjectDetection();
             robot.setPhoneScanPosition();
 
+            robot.activateTensorFlowObjectDetection();
+
+            robot.dropMarker();
+
             while (opModeIsActive()) {
-                // getUpdatedRecognitions() will return null if no new information is available since
-                // the last time that call was made.
-                List<Recognition> updatedRecognitions = robot.tfod.getUpdatedRecognitions();
-
-                if (updatedRecognitions != null) {
-                  telemetry.addData("# Object Detected", updatedRecognitions.size());
-                  if (updatedRecognitions.size() == 3) {
-                    int goldMineralX = -1;
-                    int silverMineral1X = -1;
-                    int silverMineral2X = -1;
-                    for (Recognition recognition : updatedRecognitions)
-                    {
-                        telemetry.addData(recognition.getLabel(), "Left %.2f", recognition.getLeft());
-
-                        if (recognition.getLabel().equals(robot.LABEL_GOLD_MINERAL))
-                        {
-                            goldMineralX = (int) recognition.getTop();
-                        } else if (silverMineral1X == -1) {
-                            silverMineral1X = (int) recognition.getTop();
-                        } else {
-                            silverMineral2X = (int) recognition.getTop();
-                        }
-                    }
-
-                    if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1)
-                    {
-                        if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X)
-                        {
-                            telemetry.addData("Gold Mineral Position", "Left");
-                        }
-                        else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X)
-                        {
-                            telemetry.addData("Gold Mineral Position", "Right");
-                        }
-                        else
-                        {
-                            telemetry.addData("Gold Mineral Position", "Center");
-                        }
-                    }
-                  }
-                  telemetry.update();
-                }
+//                robot.detectMineral( telemetry );
+//                telemetry.update();
             }
 
             robot.tfod.shutdown();
