@@ -103,81 +103,12 @@ public class AutonomousTest extends LinearOpMode {
 
         if (opModeIsActive())
         {
-         //   robot.driveBackwardRotationAlignWall(3, 0.40, 7, telemetry);
+            robot. driveForwardRotationAlignWall(1.5, 0.40, 7, telemetry);
 
-         //   robot.tfod.shutdown();
-            robot.lowerRobot();
+            robot.driveForwardTillTime( 5, 0.20);
+
         }
-    }
 
-
-    void centerMineral(){
-        robot.turnLeftTillDegrees(345, 0.35, telemetry);
-
-        robot.driveForwardRotation(0.25, 0.35);
-
-        robot.turnRightTillDegrees(0, 0.35, telemetry);
-
-        robot.driveForwardRotation(1.25, 0.5 );
-
-        robot.driveBackwardRotation(0.75, 0.35);
-
-        robot.driveLeftTillRotation(1.75, 0.35);
-
-        robot.turnLeftTillDegrees(245, 0.4, telemetry);
-
-        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
-
-        robot.dropMarker();
-
-        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
-
-    }
-    void leftMineral(){
-        robot.turnLeftTillDegrees(330, 0.35, telemetry);
-
-        robot.driveForwardRotation(0.25, 0.35);
-
-        robot.driveForwardRotationTurn(1, .35, -.3);
-
-        robot.driveBackwardRotation(0.75, 0.35);
-
-        robot.driveLeftTillRotation(1.75, 0.35);
-
-        robot.turnLeftTillDegrees(245, 0.4, telemetry);
-
-        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
-
-        robot.dropMarker();
-
-        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
-
-
-
-
-    }
-    void rightMineral(){
-        robot.turnLeftTillDegrees(345, 0.35, telemetry);
-
-        robot.driveForwardRotation(0.25, 0.35);
-
-        robot.turnRightTillDegrees(45, 0.35, telemetry);
-
-        robot.driveForwardRotationTurn(1.75, 0.35, 0.3);
-
-        robot.driveBackwardRotation(0.75, 0.35);
-
-        robot.driveLeftTillRotation(1.75, 0.35);
-
-        robot.turnLeftTillDegrees(245, 0.4, telemetry);
-
-        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
-
-        robot.dropMarker();
-
-        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
-
-
-
+        robot.tfod.shutdown();
     }
 }

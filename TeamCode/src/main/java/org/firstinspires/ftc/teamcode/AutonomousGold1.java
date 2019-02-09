@@ -110,19 +110,22 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.lowerRobot();
 
-        Robot.MineralLocation mineralLocation = robot.detectMineral( telemetry );
+        Robot.MineralLocation mineralLocation = Robot.MineralLocation.UNKNOWN;
 
-        switch (mineralLocation)
-        {
-            case LEFT:
-                leftMineral();
-                break;
-            case CENTER:
-                centerMineral();
-                break;
-            case RIGHT:
-                rightMineral();
-                break;
+        while (mineralLocation == Robot.MineralLocation.UNKNOWN) {
+            mineralLocation = robot.detectMineral(telemetry);
+
+            switch (mineralLocation) {
+                case LEFT:
+                    leftMineral();
+                    break;
+                case CENTER:
+                    centerMineral();
+                    break;
+                case RIGHT:
+                    rightMineral();
+                    break;
+            }
         }
 
         robot.tfod.shutdown();
@@ -139,13 +142,19 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.driveForwardRotation(2.1, 0.5 );
 
+        robot.turnRightTillDegrees(25, 0.35, telemetry);
+
         robot.dropMarker();
 
         robot.driveBackwardRotation(0.1, 0.5 );
 
         robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
+        robot.driveForwardRotation(0.15, 0.35);
+
         robot.driveForwardRotationAlignWall(3, 0.4, 7, telemetry);
+
+        robot.driveForwardTillTime( 5, 0.20);
     }
 
     void leftMineral()
@@ -158,6 +167,8 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.driveForwardRotation(.35, .35);
 
+        robot.turnRightTillDegrees(25, 0.35, telemetry);
+
         robot.dropMarker();
 
         robot.driveBackwardRotation(.35, .35);
@@ -165,6 +176,8 @@ public class AutonomousGold1 extends LinearOpMode {
         robot.turnRightTillDegrees(215, 0.4, telemetry);
 
         robot.driveForwardRotationAlignWall(2.75, 0.4, 7, telemetry);
+
+        robot.driveForwardTillTime( 5, 0.20);
 
     }
 
@@ -176,9 +189,11 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(45, 0.35, telemetry);
 
-        robot.driveForwardRotationTurn(2.5, 0.35, 0.3);
+        robot.driveForwardRotationTurn(2.3, 0.35, 0.30);
 
-        robot.driveForwardRotation(1.1, .35);
+        robot.driveForwardRotation(0.85, .35);
+
+        robot.turnRightTillDegrees(25, 0.35, telemetry);
 
         robot.dropMarker();
 
@@ -186,8 +201,13 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
-        robot.driveForwardRotationAlignWall(3.0, 0.4, 7, telemetry);
+        robot.driveForwardRotation(0.1, 0.50);
 
+        robot.driveRightTillRotation(0.2, 0.4);
+
+        robot.driveForwardRotationAlignWall(3.25, 0.4, 7, telemetry);
+
+        robot.driveForwardTillTime( 5, 0.20);
     }
 
 }

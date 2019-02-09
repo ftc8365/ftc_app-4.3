@@ -38,6 +38,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -192,6 +193,7 @@ public class Robot
         motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         motorCenter.setDirection(DcMotor.Direction.REVERSE);
         motorLift.setDirection(DcMotor.Direction.FORWARD);
+        motorLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         motorIntakeLeftArm.setDirection(DcMotor.Direction.REVERSE);
         motorIntakeRightArm.setDirection(DcMotor.Direction.FORWARD);
@@ -408,7 +410,7 @@ public class Robot
 
     public void dropMarker(){
         this.servoIntake.setPosition(0);    // out take
-        sleep(1500);
+        sleep(1000);
         this.servoIntake.setPosition(0.5);  //stops intake
     }
 
@@ -423,14 +425,28 @@ public class Robot
         boolean cont = true;
         double power = 0.05;
 
-        motorFrontRight.setPower( power );
-        motorFrontLeft.setPower( power );
+        double motorCenterPower = 0;
+        double motorLeftPower = 0;
+        double motorRightPower = 0;
+
+        motorFrontRight.setPower( 0 );
+        motorFrontLeft.setPower( 0 );
         motorCenter.setPower( 0.0 );
+
+        double lastFrontSensorValue = 255;
+        double lastBackSensorValue = 255;
+
 
         while (cont)
         {
-            if (motorFrontRight.getCurrentPosition() - initPosition >= 1000 * rotation)
+            motorCenterPower = 0;
+            motorLeftPower = 0;
+            motorRightPower = 0;
+
+            if (motorFrontRight.getCurrentPosition() - initPosition >= 1000 * rotation) {
                 cont = false;
+                continue;
+            }
 
             if (power < targetPower)
                 power += 0.02;
@@ -438,86 +454,55 @@ public class Robot
             double sensorFront = this.rangeSensorFront.rawUltrasonic();
             double sensorBack = this.rangeSensorBack.rawUltrasonic();
 
-            double motorCenterPower = (sensorBack - sensorFront) * 0.05;
+            if (sensorFront > 250)
+                sensorFront = lastFrontSensorValue;
+            if (sensorBack > 250)
+                sensorBack = lastBackSensorValue;
 
-            if (sensorFront > 100)
+            if (sensorFront == 255 && sensorBack == 255)
                 continue;
-            /*if (sensorFront == distance || sensorBack == distance && !distanceAchieved)
-                distanceAchieved = true;
 
-            if (distanceAchieved){
-                if (sensorFront >= distance + 3) {
-                    motorCenter.setPower(0.4);
-                } else if (sensorFront <= distance - 3) {
-                    motorCenter.setPower(-0.4);
-                }
-                else
-                {
-                    motorFrontRight.setPower( power );
-                    motorFrontLeft.setPower( power );
+            if (Math.abs(sensorBack - sensorFront) > 2)
+            {
+                motorCenterPower = (sensorBack > sensorFront) ? 0.25 : - 0.25;
 
-
-                    if (motorCenterPower > 0.20)
-                        motorCenterPower = 0.20;
-
-                    motorCenter.setPower( motorCenterPower );
-
-                }
+                motorRightPower = motorCenterPower;
+                motorLeftPower = -1 * motorCenterPower;
             }
-            else {*/
-                if (sensorFront >= distance + 3) {
-                    motorFrontRight.setPower(-0.10);
-                    motorFrontLeft.setPower(0.10);
-                    motorCenter.setPower(0.4);
-                } else if (sensorFront <= distance - 3) {
-                    motorFrontRight.setPower(0.10);
-                    motorFrontLeft.setPower(-0.10);
-                    motorCenter.setPower(-0.4);
-                }
-                else
-                {
-                    motorFrontRight.setPower( power );
-                    motorFrontLeft.setPower( power );
+            else if (Math.max(sensorFront, sensorBack) > distance + 3)
+            {
+                motorRightPower  = -0.10;
+                motorLeftPower   =  0.10;
+                motorCenterPower =  0.45;
+            }
+            else if (Math.min(sensorFront, sensorBack) < distance - 3)
+            {
+                motorRightPower  =  0.10;
+                motorLeftPower   = -0.10;
+                motorCenterPower = -0.40;
+            }
+            else
+            {
+                motorCenterPower = (sensorBack - sensorFront) * 0.05;
+                if (motorCenterPower > 0.20)
+                    motorCenterPower = 0.20;
 
+                motorRightPower  = power;
+                motorLeftPower   = power;
+            }
 
-                    if (motorCenterPower > 0.20)
-                        motorCenterPower = 0.20;
+            motorFrontRight.setPower( motorRightPower );
+            motorFrontLeft.setPower( motorLeftPower );
+            motorCenter.setPower( motorCenterPower );
 
-                    motorCenter.setPower( motorCenterPower );
-
-                }
-//            }
-
+            lastFrontSensorValue = sensorFront;
+            lastBackSensorValue =  sensorBack;
 
             telemetry.addData("sensorFront", sensorFront);
             telemetry.addData("sensorBack", sensorBack);
-            telemetry.addData("motorCenterPower", motorCenterPower);
             telemetry.update();
-
-
-
-/*
-            telemetry.addData("joystick DA pos", getDirectionAwareJoystickPosition());
-
-            if (sensorFront > 6){
-                    motorCenter.setPower(-power);
-            }
-            else if (sensorFront == 6){
-                if (sensorBack > 6){
-                    motorCenter.setPower(power);
-                }
-                else if (sensorBack == 6){
-                    motorCenter.setPower(0);
-                }
-                else if (sensorBack < 6){
-                    motorCenter.setPower(-power);
-                }
-            }
-            else if (sensorFront < 6){
-                    motorCenter.setPower(power);
-            }
-*/
         }
+
         motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -526,38 +511,6 @@ public class Robot
         motorFrontLeft.setPower(0);
         motorCenter.setPower(0);
     }
-
-
-
-    ////////////////////////////////////////////////////////
-    public void driveForwardTillTime( double seconds, double targetPower )
-    {
-        int initPosition = motorFrontRight.getCurrentPosition();
-
-        boolean cont = true;
-        double power = 0.10;
-
-        motorFrontRight.setPower( power );
-        motorFrontLeft.setPower( power );
-        motorCenter.setPower( 0.0 );
-
-        while (power < targetPower)
-        {
-            if (power < targetPower)
-                power += 0.02;
-
-            motorFrontRight.setPower( power );
-            motorFrontLeft.setPower( power );
-        }
-
-        sleep( (long)(seconds * 1000));
-
-        motorFrontRight.setPower(0);
-        motorFrontLeft.setPower(0);
-        motorCenter.setPower(0);
-    }
-
-
 
     ////////////////////////////////////////////////////////
     public void driveRightTillRotation( double rotation, double targetPower )
@@ -618,6 +571,37 @@ public class Robot
         motorCenter.setPower(0);
     }
 
+
+    ////////////////////////////////////////////////////////
+    public void driveForwardTillTime( long seconds, double targetPower )
+    {
+        motorCenter.setPower( 0.0 );
+
+        motorFrontRight.setPower( targetPower * 1 );
+        motorFrontLeft.setPower( targetPower * 1 );
+
+        sleep(seconds * 1000);
+
+        motorFrontRight.setPower(0);
+        motorFrontLeft.setPower(0);
+        motorCenter.setPower(0);
+    }
+
+
+    ////////////////////////////////////////////////////////
+    public void driveBackwardTillTime( long seconds, double targetPower )
+    {
+        motorCenter.setPower( 0.0 );
+
+        motorFrontRight.setPower( targetPower * -1 );
+        motorFrontLeft.setPower( targetPower * -1 );
+
+        sleep(seconds * 1000);
+
+        motorFrontRight.setPower(0);
+        motorFrontLeft.setPower(0);
+        motorCenter.setPower(0);
+    }
 
 
 

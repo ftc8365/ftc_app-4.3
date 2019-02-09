@@ -77,11 +77,11 @@ public class TensorFlowObjectDetection extends LinearOpMode {
 
             robot.activateTensorFlowObjectDetection();
 
-            robot.dropMarker();
+//            robot.dropMarker();
 
             while (opModeIsActive()) {
-//                robot.detectMineral( telemetry );
-//                telemetry.update();
+                robot.detectMineral( telemetry );
+                telemetry.update();
             }
 
             robot.tfod.shutdown();

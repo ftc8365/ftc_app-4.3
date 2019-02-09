@@ -107,19 +107,22 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.lowerRobot();
 
-        Robot.MineralLocation mineralLocation = robot.detectMineral( telemetry );
+        Robot.MineralLocation mineralLocation = Robot.MineralLocation.UNKNOWN;
 
-        switch (mineralLocation)
-        {
-            case LEFT:
-                leftMineral();
-                break;
-            case CENTER:
-                centerMineral();
-                break;
-            case RIGHT:
-                rightMineral();
-                break;
+        while (mineralLocation == Robot.MineralLocation.UNKNOWN) {
+            mineralLocation = robot.detectMineral(telemetry);
+
+            switch (mineralLocation) {
+                case LEFT:
+                    leftMineral();
+                    break;
+                case CENTER:
+                    centerMineral();
+                    break;
+                case RIGHT:
+                    rightMineral();
+                    break;
+            }
         }
 
         robot.tfod.shutdown();
@@ -135,20 +138,21 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(0, 0.35, telemetry);
 
-        robot.driveForwardRotation(1.25, 0.5 );
+        robot.driveForwardRotation(1, 0.5 );
 
-        robot.driveBackwardRotation(0.75, 0.35);
+        robot.driveBackwardRotation(0.70, 0.35);
 
-        robot.driveLeftTillRotation(1.75, 0.35);
+        robot.driveLeftTillRotation(1.5, 0.5);
 
         robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
-        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(1.5, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
-        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(2.75, 0.35, 7, telemetry);
 
+        robot.driveBackwardTillTime( 5, 0.20);
     }
 
     void leftMineral()
@@ -157,20 +161,21 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.driveForwardRotation(0.25, 0.35);
 
-        robot.driveForwardRotationTurn(1, .35, -.3);
+        robot.driveForwardRotationTurn(0.75, .35, -.3);
 
-        robot.driveBackwardRotation(0.75, 0.35);
+        robot.driveBackwardRotation(0.6, 0.35);
 
-        robot.driveLeftTillRotation(1.75, 0.35);
+        robot.driveLeftTillRotation(0.75, 0.50);
 
         robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
-        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(1.25, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
-        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(2.5, 0.35, 7, telemetry);
 
+        robot.driveBackwardTillTime( 5, 0.20);
     }
 
     void rightMineral()
@@ -181,19 +186,23 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(45, 0.35, telemetry);
 
-        robot.driveForwardRotationTurn(1.75, 0.35, 0.3);
+        robot.driveForwardRotationTurn(1.6, 0.35, 0.3);
 
-        robot.driveBackwardRotation(0.75, 0.35);
+        robot.driveBackwardRotation(0.6, 0.35);
 
-        robot.driveLeftTillRotation(1.75, 0.35);
+        robot.turnRightTillDegrees(355, 0.35, telemetry);
+
+        robot.driveLeftTillRotation(2.25, 0.7);
 
         robot.turnLeftTillDegrees(245, 0.4, telemetry);
 
-        robot.driveForwardRotationAlignWall(1, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(1.45, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
-        robot.driveForwardRotationAlignWall(2, 0.35, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(2.75, 0.35, 7, telemetry);
 
+        robot.driveBackwardTillTime( 5, 0.20);
     }
+
 }
