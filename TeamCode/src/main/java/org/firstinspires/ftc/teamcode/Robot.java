@@ -80,7 +80,8 @@ public class Robot
 
 //    public DcMotor motorIntakeHopper   = null;
 //    public DcMotor motorIntakeSlide    = null;
-
+    public int[] extensionPosition = new int[4];
+    public int extensionCounter = 0;
 
     /////////////////////
     // Declare vuforia tensorflow variables
@@ -103,6 +104,13 @@ public class Robot
         LEFT
     };
 
+    public enum IntakeState
+    {
+        INTAKE_DOWN,
+        STAGE1_UP,
+        STAGE2_UP,
+        STAGE1_DOWN
+    };
 
     /////////////////////
     // Declare sensors
@@ -124,9 +132,10 @@ public class Robot
     Servo servo4 = null;
 
 
-    boolean     forwardFacing = true;
-
+    boolean forwardFacing = true;
+    boolean intakeRaised  = false;
     boolean distanceAchieved = false;
+    IntakeState intakeState = IntakeState.INTAKE_DOWN;
 
 
     public final boolean setforwardFacing(boolean forwardFacing)
@@ -161,19 +170,25 @@ public class Robot
 
     public void lowerRobot()
     {
-        while (rangeSensorBottom.rawUltrasonic() >= 5) {
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        while (runtime.seconds() < 5.0 && rangeSensorBottom.rawUltrasonic() > 5)
+        {
             motorLift.setPower(1.0);
         }
 
+        sleep(50);
+
         motorLift.setPower(0.0);
-        //   sleep(150);
     }
 
     //----------------------------------------------------------------------------------------------
     // Initialization Methods
     //----------------------------------------------------------------------------------------------
 
-    public void initMotors( HardwareMap hardwareMap, boolean brake ) {
+    public void initMotors( HardwareMap hardwareMap, boolean brake )
+    {
         motorFrontRight     = hardwareMap.get(DcMotor.class, "motor1");
         motorFrontLeft      = hardwareMap.get(DcMotor.class, "motor2");
         motorCenter         = hardwareMap.get(DcMotor.class, "motor3");
@@ -215,6 +230,14 @@ public class Robot
         motorIntakeLeftArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorIntakeRightArm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+        int intakePos = this.motorIntakeExtension.getCurrentPosition();
+
+        extensionPosition[0] = intakePos - 50;
+        extensionPosition[1] = intakePos - 2500;
+        extensionPosition[2] = intakePos - 3500;
+        extensionPosition[3] = intakePos - 4500;
+
+
     }
 
     public void initSensors( HardwareMap hardwareMap )
@@ -222,11 +245,6 @@ public class Robot
         rangeSensorBottom   = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor1");
         rangeSensorFront    = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor2");
         rangeSensorBack     = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor3");
-
-//        digitalTouch = hardwareMap.get(DigitalChannel.class, "Touch1");
-
-        //digitalTouch.setMode(DigitalChannel.Mode.INPUT);
-
     }
 
     public void initServos( HardwareMap hardwareMap )
@@ -840,63 +858,237 @@ public class Robot
         this.motorCenter.setPower(0);
         this.motorFrontLeft.setPower(0);
         this.motorFrontRight.setPower(0);
-//        this.motorLift.setPower(0);
     }
 
-
-
-    public void extendIntake()
+    private double extendIntakeToPos(int pos)
     {
-        double startingPos = this.motorIntakeExtension.getCurrentPosition();
-        while (this.motorIntakeExtension.getCurrentPosition() >= startingPos - 600) {
-            this.motorIntakeExtension.setPower(-0.5);
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        double rampUpPower = -0.10;
+
+        while ((runtime.seconds() < 1.0) &&
+                (this.motorIntakeExtension.getCurrentPosition() >= extensionPosition[pos]) )
+        {
+            this.motorIntakeExtension.setPower( rampUpPower );
+
+            rampUpPower -= 0.02;
+            if (rampUpPower <= -0.50)
+                rampUpPower = -0.50;
         }
 
         this.motorIntakeExtension.setPower(0);
+
+        return 0.0;
     }
 
-    public void retractIntake()
+    private int getNextExtensionPos()
     {
-        double startingPos = this.motorIntakeExtension.getCurrentPosition();
-        while (this.motorIntakeExtension.getCurrentPosition() <= startingPos + 600) {
-            this.motorIntakeExtension.setPower(0.5);
+        int pos = this.motorIntakeExtension.getCurrentPosition();
+        int i = 1;
+
+        while ( i<= 2 && pos < this.extensionPosition[i] )
+            i++;
+
+        return i;
+    }
+
+
+    private int getPreviousExtensionPos()
+    {
+        int pos = this.motorIntakeExtension.getCurrentPosition();
+        int i = 2;
+
+        while ( i >  0 && this.extensionPosition[i] < pos )
+            i--;
+
+        return i;
+    }
+
+
+    public double extendIntake()
+    {
+        double intakePower = 0;
+
+        if (extensionCounter <= 2)      // Allow at most 3 extensions
+        {
+            extensionCounter = getNextExtensionPos();
+
+/*            if (extensionCounter == 2 && !intakeRaised) {
+                this.motorIntakeLeftArm.setPower(-0.35);
+                this.motorIntakeRightArm.setPower(-0.35);
+                sleep(50);
+                intakePower = -0.20;
+                intakeRaised = true;
+            }
+            else {
+                intakeRaised = false;
+                this.motorIntakeLeftArm.setPower(0.0);
+                this.motorIntakeRightArm.setPower(0.0);
+                intakePower = 0.0;
+            }
+*/
+            extendIntakeToPos( extensionCounter );
+        }
+
+        return intakePower;
+    }
+
+    private double retractIntakeToPos(int pos)
+    {
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        double rampUpPower = -0.10;
+
+        while (runtime.seconds() < 2.5)
+        {
+            int posToGo = extensionPosition[pos] - this.motorIntakeExtension.getCurrentPosition();
+
+            if (posToGo <= 0)
+                break;
+
+            if (posToGo > 200)
+                this.motorIntakeExtension.setPower(0.75);
+            else
+                this.motorIntakeExtension.setPower(0.35);
         }
 
         this.motorIntakeExtension.setPower(0);
+
+        return 0.0;
     }
 
 
-    public void raiseIntake()
+    public double retractIntake()
     {
+        if (extensionCounter > 0) {
+
+            extensionCounter = this.getPreviousExtensionPos();
+
+            return retractIntakeToPos( extensionCounter );
+        }
+
+        return 0;
+    }
+
+    public double lowerIntakeStep1( double currentPower )
+    {
+        if (intakeState != IntakeState.STAGE2_UP)
+            return currentPower;
+
+        ElapsedTime runtime = new ElapsedTime();
+
         double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
 
-        while (this.motorIntakeLeftArm.getCurrentPosition() >= startingPos - 200) {
-            this.motorIntakeLeftArm.setPower(-1.0);
-            this.motorIntakeRightArm.setPower(-1.0);
+        double power = 0.10;
+
+        runtime.reset();
+
+        while ((runtime.seconds() < 2.0) &&
+                (this.motorIntakeLeftArm.getCurrentPosition() <= startingPos + 400))
+        {
+            this.motorIntakeLeftArm.setPower(power);
+            this.motorIntakeRightArm.setPower(power);
+
+            power += 0.02;
+            if (power > 0.20)
+                power = 0.20;
         }
 
-        while (this.motorIntakeLeftArm.getCurrentPosition() >= startingPos - 300) {
-            this.motorIntakeLeftArm.setPower(-0.5);
-            this.motorIntakeRightArm.setPower(-0.5);
+        while ((runtime.seconds() < 2.0) &&
+                (this.motorIntakeLeftArm.getCurrentPosition() <= startingPos + 900))
+        {
+            this.motorIntakeLeftArm.setPower(0);
+            this.motorIntakeRightArm.setPower(0);
         }
 
+        this.motorIntakeLeftArm.setPower(-0.2);
+        this.motorIntakeRightArm.setPower(-0.2);
+
+        retractIntake();
+
+        intakeState = IntakeState.STAGE1_DOWN;
+
+        return -0.2;
+    }
+
+    public double lowerIntakeStep2(double currentPower)
+    {
+        if (intakeState != IntakeState.STAGE1_DOWN)
+            return currentPower;
+
+        intakeState = IntakeState.INTAKE_DOWN;
+
+        return 0.0;
+    }
+
+    public double raiseIntakeStep1()
+    {
+        if ( intakeState != IntakeState.INTAKE_DOWN )
+            return 0.0;
+
+        ElapsedTime runtime = new ElapsedTime();
+
+        double rampUpPower = -0.20;
+        double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
+
+        if (this.motorIntakeExtension.getCurrentPosition() < extensionPosition[1])
+            retractIntakeToPos(1);
+        else
+            extendIntakeToPos(1);
+
+        runtime.reset();
+
+        while ((runtime.seconds() < 1.0) &&
+                (this.motorIntakeLeftArm.getCurrentPosition() >= startingPos - 200))
+        {
+            this.motorIntakeLeftArm.setPower( rampUpPower);
+            this.motorIntakeRightArm.setPower( rampUpPower );
+            rampUpPower -= 0.02;
+
+            if (rampUpPower < -0.75)
+                rampUpPower = -0.75;
+        }
+
+        this.motorIntakeLeftArm.setPower(-.20);
+        this.motorIntakeRightArm.setPower(-.20);
+
+        intakeState = IntakeState.STAGE1_UP;
+
+        return -0.20;
+    }
+
+    public void raiseIntakeStep2()
+    {
+        if ( intakeState != IntakeState.STAGE1_UP )
+            return;
+
+        extendIntakeToPos(2);
+
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
+
+        this.servoIntake.setPosition(1);
+
+        while ((runtime.seconds() < 3.0) &&
+              (this.motorIntakeLeftArm.getCurrentPosition() >= startingPos - 750))
+        {
+            this.motorIntakeLeftArm.setPower(-0.85);
+            this.motorIntakeRightArm.setPower(-0.85);
+        }
 
         this.motorIntakeLeftArm.setPower(0);
         this.motorIntakeRightArm.setPower(0);
 
 
-    }
+        sleep(250);
+        this.servoIntake.setPosition(0.5);
 
+        intakeState = IntakeState.STAGE2_UP;
 
-    public void lowerIntake()
-    {
-        double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
-        while (this.motorIntakeLeftArm.getCurrentPosition() <= startingPos + 150) {
-            this.motorIntakeLeftArm.setPower(1);
-            this.motorIntakeRightArm.setPower(1);
-        }
-        this.motorIntakeLeftArm.setPower(-0.3);
-        this.motorIntakeRightArm.setPower(-0.3);
     }
 
 

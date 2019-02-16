@@ -112,7 +112,8 @@ public class AutonomousGold1 extends LinearOpMode {
 
         Robot.MineralLocation mineralLocation = Robot.MineralLocation.UNKNOWN;
 
-        while (mineralLocation == Robot.MineralLocation.UNKNOWN) {
+        while (mineralLocation == Robot.MineralLocation.UNKNOWN)
+        {
             mineralLocation = robot.detectMineral(telemetry);
 
             switch (mineralLocation) {

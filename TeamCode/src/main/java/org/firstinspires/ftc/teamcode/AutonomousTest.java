@@ -77,6 +77,7 @@ public class AutonomousTest extends LinearOpMode {
         robot.initTensorFlowObjectDetection( hardwareMap );
 
         robot.setPhoneStartingPostion();
+        runtime.reset();
 
 
         while(!opModeIsActive() && !isStopRequested())
@@ -87,6 +88,7 @@ public class AutonomousTest extends LinearOpMode {
             telemetry.addData("rangeSensorBack",    robot.rangeSensorBack.rawUltrasonic());
 
             telemetry.addData("",  "------------------------------");
+            telemetry.addData("Time", runtime.seconds());
             telemetry.addData(">", "Press Play to start");
             telemetry.update();
         }
@@ -103,10 +105,7 @@ public class AutonomousTest extends LinearOpMode {
 
         if (opModeIsActive())
         {
-            robot. driveForwardRotationAlignWall(1.5, 0.40, 7, telemetry);
-
-            robot.driveForwardTillTime( 5, 0.20);
-
+            sleep(100);
         }
 
         robot.tfod.shutdown();

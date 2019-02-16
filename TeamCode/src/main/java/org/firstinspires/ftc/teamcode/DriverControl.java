@@ -88,25 +88,23 @@ public class DriverControl extends LinearOpMode {
 
         robot.setPhoneStartingPostion();
 
-//        robot.servoIntake.setPosition(1);
-
         while (!opModeIsActive() && !isStopRequested())
         {
             telemetry.addData(">", "Press Play to start");
             telemetry.update();
         }
 
-//        robot.servoIntake.setPosition(0);
-
         robot.activateGyroTracking();
 
         this.initalIntakeArmPosition = robot.motorIntakeLeftArm.getCurrentPosition();
 
         // run until the end of the match (driver presses STOP)
-        while (opModeIsActive() ) {
-
+        while (opModeIsActive() )
+        {
             if (gamepad1.y)
-                robot.setforwardFacing( !robot.getforwardFacing() );
+                robot.setforwardFacing( false );
+            if (gamepad1.b)
+                robot.setforwardFacing( true );
 
             if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right)
                 operateLiftMotor();
@@ -115,78 +113,75 @@ public class DriverControl extends LinearOpMode {
 
             operateIntake();
 
-//            if (robot.digitalTouch.getState() == true) {
-//                telemetry.addData("Digital Touch", "Is Not Pressed");
-//            } else {
-//                telemetry.addData("Digital Touch", "Is Pressed");
-//            }
-
-//            telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());
-//            telemetry.addData("rangeSensorBottom",  robot.rangeSensorBottom.rawUltrasonic());
-//            telemetry.addData("rangeSensorFront",   robot.rangeSensorFront.rawUltrasonic());
-//            telemetry.addData("rangeSensorBack",    robot.rangeSensorBack.rawUltrasonic());
             telemetry.update();
         }
 
         robot.stopAllMotors();
     }
 
+    public double motorIntakeExtensionPower = 0;
+    public double rotatingPower = 0.0;
+    public boolean useJoystick = false;
+
     void operateIntake()
     {
-        double rotatingPower = 0.0;
-
-        if ( gamepad2.right_stick_y > 0.01 )
+        if ( Math.abs(gamepad2.right_stick_y) > 0.01 )
         {
-            rotatingPower = 0.50;
-
-//            if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 50)
-//                rotatingPower = 0.00;
-//            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 150)
-//                rotatingPower = 0.05;
-//            else if (robot.motorIntakeLeftArm.getCurrentPosition() > this.initalIntakeArmPosition - 300)
-//                rotatingPower = 0.10;
+            rotatingPower = 0.5 * gamepad2.right_stick_y;
+            useJoystick = true;
         }
-        else if ( gamepad2.right_stick_y < -0.01 )
-        {
-            rotatingPower = -1.0;
+        else if (useJoystick) {
+            rotatingPower = 0;
+            useJoystick = false;
         }
 
         double motorIntakeExtensionPower = 0;
 
         if ( gamepad2.left_stick_y > 0.01 )
         {
-            motorIntakeExtensionPower = 0.8;
+            motorIntakeExtensionPower = 0.5;
         }
         else if ( gamepad2.left_stick_y < -0.01 )
         {
-            motorIntakeExtensionPower = -0.8;
-        }
-
-        if (gamepad2.dpad_right) {
-            robot.extendIntake();
-        }
-
-        if (gamepad2.dpad_left) {
-            robot.retractIntake();
+            motorIntakeExtensionPower = -0.5;
         }
 
         if (gamepad2.dpad_up) {
-            robot.raiseIntake();
-            telemetry.addData("Dpad Up", "Done");
+            rotatingPower = robot.extendIntake();
         }
 
         if (gamepad2.dpad_down) {
-            robot.lowerIntake();
-            telemetry.addData("Dpad Down", "Done");
+            robot.retractIntake();
         }
 
+        if (gamepad2.b) {
+            rotatingPower = robot.lowerIntakeStep1(rotatingPower);
+            useJoystick  = false;
+        }
+        else if (gamepad2.a) {
+            rotatingPower = robot.lowerIntakeStep2(rotatingPower);
+            useJoystick  = false;
+        }
+        else if (gamepad2.x) {
+            rotatingPower = robot.raiseIntakeStep1();
+            motorIntakeExtensionPower = 0;
+            useJoystick  = false;
+        } else if (gamepad2.y){
+            robot.raiseIntakeStep2();
+            rotatingPower = 0;
+            useJoystick  = false;
+        }
 
-        telemetry.addData("Motor Intake Power", rotatingPower);
-        telemetry.addData("Motor Left Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
-        telemetry.addData("Motor Right Intake Position", robot.motorIntakeRightArm.getCurrentPosition());
         robot.motorIntakeLeftArm.setPower(rotatingPower);
         robot.motorIntakeRightArm.setPower(rotatingPower);
+
         robot.motorIntakeExtension.setPower(motorIntakeExtensionPower);
+
+        telemetry.addData("Motor Intake Power", rotatingPower);
+        telemetry.addData("Motor Extension Position", robot.motorIntakeExtension.getCurrentPosition());
+
+        telemetry.addData("Motor Left Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
+        telemetry.addData("Motor Right Intake Position", robot.motorIntakeRightArm.getCurrentPosition());
 
 
         if (gamepad2.left_trigger > 0)
@@ -206,9 +201,9 @@ public class DriverControl extends LinearOpMode {
         double motorCenterPower     = 0;
 
         if (gamepad1.right_trigger != 0)
-            SCALING_FACTOR = 0.70;
+            SCALING_FACTOR = 0.85;
         else
-            SCALING_FACTOR = 0.50;
+            SCALING_FACTOR = 0.85;
 
         double OFFSET_POWER = 0.10;
 
@@ -450,34 +445,5 @@ public class DriverControl extends LinearOpMode {
         }
         robot.motorLift.setPower(motorPower);
     }
-
-/*
-    void operateIntake() {
-
-        double powerSlide = 0;
-        double powerHopper = 0;
-
-        if ((gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.dpad_left || gamepad2.dpad_right) == false)
-        {
-            if (gamepad2.right_stick_y > 0)
-                powerSlide = 0.8;
-            else if (gamepad2.right_stick_y < 0)
-                powerSlide = -0.8;
-
-            motorIntakeSlide.setPower(powerSlide);
-        }
-
-        if (gamepad2.left_trigger > 0)
-            powerHopper = 1.0;
-
-        if (gamepad2.right_trigger > 0 )
-            powerHopper = -1.0;
-
-        motorIntakeHopper.setPower(powerHopper);
-
-        telemetry.addData("motorIntakeSlide", powerSlide);
-        telemetry.addData("motorIntakeHopper", powerHopper);
-
-    }*/
 
 }

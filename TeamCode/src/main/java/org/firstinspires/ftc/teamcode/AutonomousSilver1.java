@@ -86,6 +86,9 @@ public class AutonomousSilver1 extends LinearOpMode {
             telemetry.addData("rangeSensorFront",   robot.rangeSensorFront.rawUltrasonic());
             telemetry.addData("rangeSensorBack",    robot.rangeSensorBack.rawUltrasonic());
 
+            telemetry.addData("motorFrontRight.currnentPos",    robot.motorFrontRight.getCurrentPosition());
+            telemetry.addData("motorCenter.currnentPos",        robot.motorCenter.getCurrentPosition());
+
             telemetry.addData("",  "------------------------------");
             telemetry.addData(">", "Press Play to start");
             telemetry.update();
@@ -109,7 +112,8 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         Robot.MineralLocation mineralLocation = Robot.MineralLocation.UNKNOWN;
 
-        while (mineralLocation == Robot.MineralLocation.UNKNOWN) {
+        while (mineralLocation == Robot.MineralLocation.UNKNOWN)
+        {
             mineralLocation = robot.detectMineral(telemetry);
 
             switch (mineralLocation) {
@@ -126,7 +130,6 @@ public class AutonomousSilver1 extends LinearOpMode {
         }
 
         robot.tfod.shutdown();
-
     }
 
 
