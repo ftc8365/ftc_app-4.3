@@ -127,7 +127,7 @@ public class DriverControl extends LinearOpMode {
     {
         if ( Math.abs(gamepad2.right_stick_y) > 0.01 )
         {
-            rotatingPower = 0.5 * gamepad2.right_stick_y;
+            rotatingPower = /*robot.getRotatingPower(gamepad2.right_stick_y)*/Math.pow(gamepad2.right_stick_y,3);
             useJoystick = true;
         }
         else if (useJoystick) {
@@ -147,14 +147,13 @@ public class DriverControl extends LinearOpMode {
         }
 
         if (gamepad2.dpad_up) {
-            rotatingPower = robot.extendIntake();
+            rotatingPower = robot.extendIntake( rotatingPower );
         }
 
         if (gamepad2.dpad_down) {
-            robot.retractIntake();
+            robot.retractIntake( rotatingPower );
         }
-
-        if (gamepad2.b) {
+        else if (gamepad2.b) {
             rotatingPower = robot.lowerIntakeStep1(rotatingPower);
             useJoystick  = false;
         }
@@ -163,12 +162,11 @@ public class DriverControl extends LinearOpMode {
             useJoystick  = false;
         }
         else if (gamepad2.x) {
-            rotatingPower = robot.raiseIntakeStep1();
+            rotatingPower = robot.raiseIntakeStep1( rotatingPower );
             motorIntakeExtensionPower = 0;
             useJoystick  = false;
         } else if (gamepad2.y){
-            robot.raiseIntakeStep2();
-            rotatingPower = 0;
+            rotatingPower = robot.raiseIntakeStep2( rotatingPower );
             useJoystick  = false;
         }
 
@@ -177,11 +175,11 @@ public class DriverControl extends LinearOpMode {
 
         robot.motorIntakeExtension.setPower(motorIntakeExtensionPower);
 
-        telemetry.addData("Motor Intake Power", rotatingPower);
-        telemetry.addData("Motor Extension Position", robot.motorIntakeExtension.getCurrentPosition());
+//        telemetry.addData("Motor Intake Power", rotatingPower);
+//        telemetry.addData("Motor Extension Position", robot.motorIntakeExtension.getCurrentPosition());
 
-        telemetry.addData("Motor Left Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
-        telemetry.addData("Motor Right Intake Position", robot.motorIntakeRightArm.getCurrentPosition());
+//        telemetry.addData("Motor Left Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
+//        telemetry.addData("Motor Right Intake Position", robot.motorIntakeRightArm.getCurrentPosition());
 
 
         if (gamepad2.left_trigger > 0)
@@ -201,9 +199,9 @@ public class DriverControl extends LinearOpMode {
         double motorCenterPower     = 0;
 
         if (gamepad1.right_trigger != 0)
-            SCALING_FACTOR = 0.85;
+            SCALING_FACTOR = 0.5;
         else
-            SCALING_FACTOR = 0.85;
+            SCALING_FACTOR = 0.5;
 
         double OFFSET_POWER = 0.10;
 

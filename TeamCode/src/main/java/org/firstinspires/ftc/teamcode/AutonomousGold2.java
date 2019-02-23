@@ -112,9 +112,15 @@ public class AutonomousGold2 extends LinearOpMode {
 
         Robot.MineralLocation mineralLocation = Robot.MineralLocation.UNKNOWN;
 
+        runtime.reset();
+
         while (mineralLocation == Robot.MineralLocation.UNKNOWN)
         {
             mineralLocation = robot.detectMineral(telemetry);
+
+            if ((mineralLocation == Robot.MineralLocation.UNKNOWN) && (runtime.seconds() > 3)) {
+                mineralLocation = Robot.MineralLocation.CENTER;
+            }
 
             switch (mineralLocation) {
                 case LEFT:
@@ -135,7 +141,9 @@ public class AutonomousGold2 extends LinearOpMode {
 
     void centerMineral()
     {
-        robot.turnLeftTillDegrees(345, 0.35, telemetry);
+        robot.driveBackwardTillTime(500, 0.5);
+
+        robot.turnLeftTillDegrees(345, 0.5, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
 
@@ -153,12 +161,14 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.driveBackwardRotationAlignWall(3, 0.4, 7, telemetry);
 
-        robot.driveBackwardTillTime( 5, 0.20);
+        robot.driveBackwardTillTime( 5000, 0.20);
     }
 
     void leftMineral()
     {
-        robot.turnLeftTillDegrees(330, 0.35, telemetry);
+        robot.driveBackwardTillTime(500, .5);
+
+        robot.turnLeftTillDegrees(330, 0.5, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
 
@@ -176,12 +186,14 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.driveBackwardRotationAlignWall(2.75, 0.4, 7, telemetry);
 
-        robot.driveBackwardTillTime( 5, 0.20);
+        robot.driveBackwardTillTime( 5000, 0.20);
     }
 
     void rightMineral()
     {
-        robot.turnLeftTillDegrees(345, 0.35, telemetry);
+        robot.driveBackwardTillTime(500, .5);
+
+        robot.turnLeftTillDegrees(345, 0.5, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
 
@@ -201,7 +213,7 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.driveBackwardRotationAlignWall(3.0, 0.4, 7, telemetry);
 
-        robot.driveBackwardTillTime( 5, 0.20);
+        robot.driveBackwardTillTime( 5000, 0.20);
 
     }
 
