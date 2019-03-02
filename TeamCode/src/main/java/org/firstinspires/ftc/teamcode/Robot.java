@@ -77,6 +77,7 @@ public class Robot
     public DcMotor motorIntakeLeftArm   = null;
     public DcMotor motorIntakeRightArm  = null;
     public DcMotor motorIntakeExtension = null;
+    public DcMotor motorIntakeSpinner   = null;
 
 //    public DcMotor motorIntakeHopper   = null;
 //    public DcMotor motorIntakeSlide    = null;
@@ -199,6 +200,7 @@ public class Robot
         motorIntakeLeftArm = hardwareMap.get(DcMotor.class, "motor5");
         motorIntakeRightArm = hardwareMap.get(DcMotor.class, "motor6");
         motorIntakeExtension = hardwareMap.get(DcMotor.class, "motor7");
+        motorIntakeSpinner = hardwareMap.get(DcMotor.class, "motor8");
 
 
 //        motorIntakeHopper   = hardwareMap.get(DcMotor.class, "motor6");
@@ -215,6 +217,8 @@ public class Robot
         motorIntakeLeftArm.setDirection(DcMotor.Direction.REVERSE);
         motorIntakeRightArm.setDirection(DcMotor.Direction.FORWARD);
         motorIntakeExtension.setDirection(DcMotor.Direction.FORWARD);
+        motorIntakeSpinner.setDirection(DcMotor.Direction.REVERSE);
+
 
         if (brake)
         {
@@ -434,9 +438,12 @@ public class Robot
     }
 
     public void dropMarker(){
-        this.servoIntake.setPosition(0);    // out take
-        sleep(1000);
-        this.servoIntake.setPosition(0.5);  //stops intake
+        //this.servoIntake.setPosition(0);    // out take
+        //sleep(1000);
+        //this.servoIntake.setPosition(0.5);  //stops intake
+        this.motorIntakeSpinner.setPower(.5);
+        sleep(500);
+        this.motorIntakeSpinner.setPower(0);
     }
 
     public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)

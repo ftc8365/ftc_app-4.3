@@ -183,11 +183,16 @@ public class DriverControl extends LinearOpMode {
 
 
         if (gamepad2.left_trigger > 0)
-            robot.servoIntake.setPosition(0);
+//            robot.servoIntake.setPosition(0);
+        robot.motorIntakeSpinner.setPower(0.60);
         else if (gamepad2.right_trigger > 0 )
-            robot.servoIntake.setPosition(1);
+//            robot.servoIntake.setPosition(1);
+            robot.motorIntakeSpinner.setPower(-0.60);
+
         else
-            robot.servoIntake.setPosition(0.5);
+//            robot.servoIntake.setPosition(0.5);
+            robot.motorIntakeSpinner.setPower(0);
+
     }
 
     void operateDriveTrain()
