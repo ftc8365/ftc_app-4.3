@@ -149,7 +149,7 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(0, 0.50, telemetry);
 
-        robot.driveForwardRotation(2.1, 0.50 );
+        robot.driveForwardRotation(1.9, 0.50 );
 
         robot.turnRightTillDegrees(25, 0.50, telemetry);
 
@@ -201,7 +201,7 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(45, 0.50, telemetry);
 
-        robot.driveForwardRotationTurn(2.3, 0.35, 0.30);
+        robot.driveForwardRotationTurn(2.3, 0.35, 0.35);
 
         robot.driveForwardRotation(0.85, .35);
 
@@ -213,7 +213,7 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.turnLeftTillDegrees(245, 0.50, telemetry);
 
-        robot.driveForwardRotation(0.1, 0.50);
+        robot.driveForwardRotation(0.05, 0.50);
 
         robot.driveRightTillRotation(0.2, 0.5, telemetry);
 

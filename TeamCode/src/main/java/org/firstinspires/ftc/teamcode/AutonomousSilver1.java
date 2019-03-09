@@ -149,11 +149,11 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(0, 0.50, telemetry);
 
-        robot.driveForwardRotation(0.9, 0.50 );
+        robot.driveForwardRotation(0.7, 0.50 );
 
-        robot.driveBackwardRotation(0.60, 0.35);
+        robot.driveBackwardRotation(0.50, 0.35);
 
-        robot.driveLeftTillRotation(1.5, 0.7, telemetry);
+        robot.driveLeftTillRotation(1.7, 0.7, telemetry);
 
         robot.turnLeftTillDegrees(245, 0.5, telemetry);
 
@@ -163,32 +163,32 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.driveBackwardRotationAlignWall(2.75, 0.40, 7, telemetry);
 
-        robot.driveBackwardTillTime( 5000, 0.20);
+        robot.driveBackwardTillTime( 2000, 0.20);
     }
 
     void leftMineral()
     {
         robot.driveBackwardTillTime(500, .5);
 
-        robot.turnLeftTillDegrees(330, 0.5, telemetry);
+        robot.turnLeftTillDegrees(325, 0.5, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
 
         robot.driveForwardRotationTurn(0.75, .35, -.3);
 
-        robot.driveBackwardRotation(0.6, 0.35);
+        robot.driveBackwardRotation(0.4, 0.35);
 
-        robot.driveLeftTillRotation(0.75, 0.70, telemetry);
+        robot.driveLeftTillRotation(1.50, 0.70, telemetry);
 
         robot.turnLeftTillDegrees(245, 0.50, telemetry);
 
-        robot.driveForwardRotationAlignWall(1.25, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(1.40, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
         robot.driveBackwardRotationAlignWall(2.5, 0.40, 7, telemetry);
 
-        robot.driveBackwardTillTime( 5000, 0.20);
+        robot.driveBackwardTillTime( 2000, 0.20);
     }
 
     void rightMineral()
@@ -199,25 +199,25 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.driveForwardRotation(0.25, 0.35);
 
-        robot.turnRightTillDegrees(45, 0.50, telemetry);
+        robot.turnRightTillDegrees(30, 0.50, telemetry);
 
-        robot.driveForwardRotationTurn(1.6, 0.35, 0.3);
+        robot.driveForwardRotationTurn(1.1, 0.35, 0.3);
 
-        robot.driveBackwardRotation(0.6, 0.35);
+        robot.driveBackwardRotation(0.3, 0.35);
 
-        robot.turnRightTillDegrees(355, 0.50, telemetry);
+        robot.turnLeftTillDegrees(355, 0.50, telemetry);
 
-        robot.driveLeftTillRotation(2.25, 0.7, telemetry);
+        robot.driveLeftTillRotation(2.5, 0.7, telemetry);
 
         robot.turnLeftTillDegrees(245, 0.50, telemetry);
 
-        robot.driveForwardRotationAlignWall(1.45, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(2.0, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
         robot.driveBackwardRotationAlignWall(2.75, 0.40, 7, telemetry);
 
-        robot.driveBackwardTillTime( 5000, 0.20);
+        robot.driveBackwardTillTime( 2000, 0.20);
     }
 
 }

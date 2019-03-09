@@ -173,7 +173,7 @@ public class Robot
 
     public void lowerRobot()
     {
-        if (rangeSensorBottom.rawUltrasonic() > 5)
+        if (rangeSensorBottom.rawUltrasonic() >= 5)
         {
 
             ElapsedTime runtime = new ElapsedTime();
@@ -184,7 +184,7 @@ public class Robot
                 motorLift.setPower(1.0);
             }
 
-            sleep(250);
+            sleep(350);
 
             motorLift.setPower(0.0);
         }
@@ -657,9 +657,9 @@ public class Robot
             motorFrontLeft.setPower( -1* offsetPower );
             motorCenter.setPower( power * -1 );
 
-//            telemetry.addData("power", power);
-//            telemetry.addData("offset", offsetPower);
-//            telemetry.update();
+            telemetry.addData("power", power);
+            telemetry.addData("offset", offsetPower);
+            telemetry.update();
         }
 
         motorFrontRight.setPower(0);
@@ -885,8 +885,9 @@ public class Robot
         while ( continueToTurn )
         {
             double currentHeading = getCurrentPositionInDegrees();
-            if (currentHeading < 30)
+            if (currentHeading < 90) {
                 currentHeading += 360;
+            }
 
             double distanceToGo = currentHeading - targetDegrees;
 
@@ -908,6 +909,11 @@ public class Robot
             {
                 continueToTurn = false;
             }
+
+            telemetry.addData("Current Heading", currentHeading);
+            telemetry.addData("Target Degrees", currentHeading);
+            telemetry.addData("Distance To Go", distanceToGo);
+            telemetry.update();
         }
 
         // Stop motors
@@ -1283,15 +1289,18 @@ public class Robot
 
         for (Recognition recognition : updatedRecognitions)
         {
-            telemetry.addData(recognition.getLabel(), "Y = %.2f", recognition.getTop());
+            telemetry.addData(recognition.getLabel(), "Y = %.2f  X = %.2f", recognition.getTop(), recognition.getLeft());
 
-            if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                goldMineralYPos = (int) recognition.getTop();
-            } else if (silverMineral1YPos == 99999) {
-                silverMineral1YPos = (int) recognition.getTop();
-            }
-            else {
-                silverMineral2YPos = (int) recognition.getTop();
+            if(recognition.getLeft() > 100 && recognition.getLeft() < 300)
+            {
+                if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                    goldMineralYPos = (int) recognition.getTop();
+                } else if (silverMineral1YPos == 99999) {
+                    silverMineral1YPos = (int) recognition.getTop();
+                }
+                else {
+                    silverMineral2YPos = (int) recognition.getTop();
+                }
             }
         }
 

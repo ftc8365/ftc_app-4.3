@@ -92,9 +92,9 @@ public class DriverControl extends LinearOpMode {
             if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right)
                 operateLiftMotor();
             else if (gamepad1.right_trigger > 0)
-                robot.turnRightTillTime(250, 75, telemetry );
+                robot.turnRightTillTime(200, 75, telemetry );
             else if (gamepad1.left_trigger > 0)
-                robot.turnLeftTillTime(250, 75, telemetry );
+                robot.turnLeftTillTime(200, 75, telemetry );
             else
                 operateDriveTrain();
 
@@ -589,6 +589,8 @@ public class DriverControl extends LinearOpMode {
 //        telemetry.addData("motorFrontRightPower", motorFrontRightPower);
 //        telemetry.addData("motorFrontLeftPower", motorFrontLeftPower);
 //        telemetry.addData("motorCenterPower", motorCenterPower);
+        telemetry.addData("motorCenterPosition", robot.motorCenter.getCurrentPosition());
+        telemetry.addData("motorFRPosition",robot.motorFrontRight.getCurrentPosition());
     }
 
 
