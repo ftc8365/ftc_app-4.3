@@ -64,7 +64,6 @@ public class TensorFlowObjectDetection extends LinearOpMode {
         robot.initTensorFlowObjectDetection( hardwareMap );
         robot.initServos( hardwareMap );
         robot.setPhoneStartingPostion();
-        robot.lockMarker();
 
         while (!opModeIsActive() && !isStopRequested())
         {
@@ -77,8 +76,6 @@ public class TensorFlowObjectDetection extends LinearOpMode {
             robot.setPhoneScanPosition();
 
             robot.activateTensorFlowObjectDetection();
-
-//            robot.dropMarker();
 
             while (opModeIsActive()) {
                 robot.detectMineral( telemetry );

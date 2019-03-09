@@ -105,7 +105,33 @@ public class AutonomousTest extends LinearOpMode {
 
         if (opModeIsActive())
         {
-            sleep(100);
+
+//            robot.driveBackwardRotation(0.1, 0.50 );
+//
+//            robot.turnLeftTillDegrees(245, 0.5, telemetry);
+
+//            robot.lowerRobot();
+
+//            robot.driveBackwardTillTime(500, 0.50);
+
+            robot.turnLeftTillDegrees(345, 0.50, telemetry);
+
+            robot.driveForwardRotation(0.25, 0.35);
+
+            robot.turnRightTillDegrees(0, 0.50, telemetry);
+
+            robot.driveForwardRotation(1.5, 0.50 );
+
+            robot.turnRightTillDegrees(25, 0.50, telemetry);
+
+            robot.dropMarker();
+
+            robot.driveBackwardRotation(0.1, 0.50 );
+
+            robot.turnLeftTillDegrees(245, 0.5, telemetry);
+
+            robot.driveForwardRotation(0.15, 0.35);
+
         }
 
         robot.tfod.shutdown();

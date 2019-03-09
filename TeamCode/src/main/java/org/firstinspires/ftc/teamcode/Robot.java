@@ -130,7 +130,7 @@ public class Robot
     // Declare servos
     /////////////////////
     Servo servoPhone = null;
-    Servo servoIntake = null;
+//    Servo servoIntake = null;
     Servo servo3 = null;
     Servo servo4 = null;
 
@@ -173,17 +173,21 @@ public class Robot
 
     public void lowerRobot()
     {
-        ElapsedTime runtime = new ElapsedTime();
-        runtime.reset();
-
-        while (runtime.seconds() < 5.0 && rangeSensorBottom.rawUltrasonic() > 5)
+        if (rangeSensorBottom.rawUltrasonic() > 5)
         {
-            motorLift.setPower(1.0);
+
+            ElapsedTime runtime = new ElapsedTime();
+            runtime.reset();
+
+            while (runtime.seconds() < 5.0 && rangeSensorBottom.rawUltrasonic() > 5)
+            {
+                motorLift.setPower(1.0);
+            }
+
+            sleep(250);
+
+            motorLift.setPower(0.0);
         }
-
-        sleep(250);
-
-        motorLift.setPower(0.0);
     }
 
     //----------------------------------------------------------------------------------------------
@@ -202,9 +206,6 @@ public class Robot
         motorIntakeExtension = hardwareMap.get(DcMotor.class, "motor7");
         motorIntakeSpinner = hardwareMap.get(DcMotor.class, "motor8");
 
-
-//        motorIntakeHopper   = hardwareMap.get(DcMotor.class, "motor6");
-//        motorIntakeSlide    = hardwareMap.get(DcMotor.class, "motor7");
 
         // Most robots need the motor on one side to be reversed to drive forward
         // Reverse the motor that runs backwards when connected directly to the battery
@@ -244,11 +245,23 @@ public class Robot
         extensionPosition[3] = intakePos - 3500;
 //        extensionPosition[4] = intakePos - 4500;
 
+        calcArmPositions();
+    }
+
+    public void calcArmPositions()
+    {
         intakeArmStaringPos = motorIntakeLeftArm.getCurrentPosition();
         intakeArmPosition[0] = intakeArmStaringPos;
-        intakeArmPosition[1] = intakeArmStaringPos - 200;
-        intakeArmPosition[2] = intakeArmStaringPos - 950;
+        intakeArmPosition[1] = intakeArmStaringPos - 300;
+        intakeArmPosition[2] = intakeArmStaringPos - 1000;
+    }
 
+    public void calcArmPositions2()
+    {
+        intakeArmStaringPos = motorIntakeLeftArm.getCurrentPosition();
+        intakeArmPosition[0] = intakeArmStaringPos+300;
+        intakeArmPosition[1] = intakeArmStaringPos;
+        intakeArmPosition[2] = intakeArmStaringPos - 700;
     }
 
     public void initSensors( HardwareMap hardwareMap )
@@ -261,7 +274,7 @@ public class Robot
     public void initServos( HardwareMap hardwareMap )
     {
         servoPhone  = hardwareMap.get(Servo.class, "servo1");
-        servoIntake = hardwareMap.get(Servo.class, "servo2");
+        //servoIntake = hardwareMap.get(Servo.class, "servo2");
         //servo2  = hardwareMap.get(Servo.class, "servo2");
         //servo3  = hardwareMap.get(Servo.class, "servo3");
         //servo4  = hardwareMap.get(Servo.class, "servo4");
@@ -379,7 +392,8 @@ public class Robot
     }
 
     ////////////////////////////////////////////////////////
-    public void driveBackwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry) {
+    public void driveBackwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
+    {
         motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -410,16 +424,20 @@ public class Robot
 
             double sensorDistance = Math.min(sensorFront, sensorBack);
 
-
-            if (sensorDistance >= distance + 3)  {
+            if (sensorDistance >= distance + 3)
+            {
                 motorFrontRight.setPower(-0.10);
                 motorFrontLeft.setPower(0.10);
                 motorCenter.setPower(0.4);
-            } else if (sensorDistance <= distance - 3) {
+            }
+            else if (sensorDistance <= distance - 3)
+            {
                 motorFrontRight.setPower(0.10);
                 motorFrontLeft.setPower(-0.10);
                 motorCenter.setPower(-0.4);
-            } else {
+            }
+            else
+            {
                 motorFrontRight.setPower(power);
                 motorFrontLeft.setPower(power);
 
@@ -428,19 +446,15 @@ public class Robot
                     motorCenterPower = 0.20;
 
                 motorCenter.setPower(motorCenterPower);
-
             }
         }
     }
 
     public void lockMarker(){
-        this.servoIntake.setPosition(0.5);  //stops intake
+        this.motorIntakeSpinner.setPower(0);
     }
 
     public void dropMarker(){
-        //this.servoIntake.setPosition(0);    // out take
-        //sleep(1000);
-        //this.servoIntake.setPosition(0.5);  //stops intake
         this.motorIntakeSpinner.setPower(.5);
         sleep(500);
         this.motorIntakeSpinner.setPower(0);
@@ -468,6 +482,10 @@ public class Robot
         double lastFrontSensorValue = 255;
         double lastBackSensorValue = 255;
 
+        boolean turning = false;
+
+        double rightRampUp = 0.20;
+        double leftRampUp  = 0.20;
 
         while (cont)
         {
@@ -500,18 +518,40 @@ public class Robot
 
                 motorRightPower = motorCenterPower;
                 motorLeftPower = -1 * motorCenterPower;
+
+                telemetry.addData("Motion", "Turn");
+
+                turning = true;
             }
-            else if (Math.max(sensorFront, sensorBack) > distance + 3)
+            else if (Math.min(sensorFront, sensorBack) > distance + 3)   // > 10
             {
-                motorRightPower  = -0.10;
-                motorLeftPower   =  0.10;
-                motorCenterPower =  0.45;
+                if (rightRampUp < 0.60)
+                    rightRampUp += 0.03;
+
+                double offsetPower = this.getSidewayOffsetPower(rightRampUp);
+
+                motorRightPower  = -1 * offsetPower;
+                motorLeftPower   = offsetPower;
+                motorCenterPower = rightRampUp;
+
+                leftRampUp = 0.20;
+
+                telemetry.addData("Motion", "RIGHT");
             }
-            else if (Math.min(sensorFront, sensorBack) < distance - 3)
+            else if (Math.min(sensorFront, sensorBack) < distance - 3)  // < 4
             {
-                motorRightPower  =  0.10;
-                motorLeftPower   = -0.10;
-                motorCenterPower = -0.40;
+                if (leftRampUp < 0.60)
+                    leftRampUp += 0.03;
+
+                double offsetPower = this.getSidewayOffsetPower(leftRampUp);
+
+                motorRightPower  =  offsetPower;
+                motorLeftPower   = -1 * offsetPower;
+                motorCenterPower = -1 * leftRampUp;
+
+                rightRampUp = 0.20;
+
+                telemetry.addData("Motion", "LEFT");
             }
             else
             {
@@ -521,6 +561,8 @@ public class Robot
 
                 motorRightPower  = power;
                 motorLeftPower   = power;
+
+                telemetry.addData("Motion", "STRAIGHT");
             }
 
             motorFrontRight.setPower( motorRightPower );
@@ -532,6 +574,9 @@ public class Robot
 
             telemetry.addData("sensorFront", sensorFront);
             telemetry.addData("sensorBack", sensorBack);
+            telemetry.addData("motorFrontRightPower", motorRightPower);
+            telemetry.addData("motorFrontLeftPower", motorLeftPower);
+            telemetry.addData("motorCenterPower", motorCenterPower);
             telemetry.update();
         }
 
@@ -545,26 +590,27 @@ public class Robot
     }
 
     ////////////////////////////////////////////////////////
-    public void driveRightTillRotation( double rotation, double targetPower )
+    public void driveRightTillRotation( double rotation, double targetPower, Telemetry telemetry )
     {
         int initPosition = motorCenter.getCurrentPosition();
 
-        boolean cont = true;
-        double power = 0.05;
+        double power = 0.20;
 
         motorFrontRight.setPower( 0 );
         motorFrontLeft.setPower( 0 );
 
-        while (cont)
+        while (true)
         {
             if (motorCenter.getCurrentPosition() - initPosition >= 1000 * rotation)
-                cont = false;
+                break;
 
             if (power < targetPower)
                 power += 0.02;
 
-            motorFrontRight.setPower( -0.20 );
-            motorFrontLeft.setPower( 0.20 );
+            double offsetPower = getSidewayOffsetPower(power);
+
+            motorFrontRight.setPower( -1 * offsetPower );
+            motorFrontLeft.setPower( offsetPower );
             motorCenter.setPower( power );
         }
 
@@ -573,35 +619,54 @@ public class Robot
         motorCenter.setPower(0);
     }
 
+    public double getSidewayOffsetPower( double centerPower )
+    {
+        double offsetPower = 0.0;
+
+        if (centerPower >= 0.60)
+            offsetPower = 0.16;
+        else if (centerPower >= 0.40)
+            offsetPower = 0.15;
+        else if (centerPower >= 0.20)
+            offsetPower = 0.10;
+
+        return offsetPower;
+    }
 
     ////////////////////////////////////////////////////////
-    public void driveLeftTillRotation( double rotation, double targetPower )
+    public void driveLeftTillRotation( double rotation, double targetPower, Telemetry telemetry )
     {
         int initPosition = motorCenter.getCurrentPosition();
 
-        boolean cont = true;
-        double power = 0.05;
+        double power = 0.15;
 
         motorFrontRight.setPower( 0 );
         motorFrontLeft.setPower( 0 );
 
-        while (cont)
+        while (true)
         {
-            if (motorCenter.getCurrentPosition() - initPosition <= -1000 * rotation)
-                cont = false;
+            if (motorCenter.getCurrentPosition() - initPosition < -1000 * rotation)
+                break;
 
             if (power < targetPower)
-                power += 0.02;
+                power += 0.005;
 
-            motorFrontRight.setPower( 0.10 );
-            motorFrontLeft.setPower( -0.10 );
+            double offsetPower = getSidewayOffsetPower(power);
+
+            motorFrontRight.setPower( offsetPower );
+            motorFrontLeft.setPower( -1* offsetPower );
             motorCenter.setPower( power * -1 );
+
+//            telemetry.addData("power", power);
+//            telemetry.addData("offset", offsetPower);
+//            telemetry.update();
         }
 
         motorFrontRight.setPower(0);
         motorFrontLeft.setPower(0);
         motorCenter.setPower(0);
     }
+
 
 
     ////////////////////////////////////////////////////////
@@ -764,7 +829,7 @@ public class Robot
 
                 // Ramp down power
                 if ( distanceToGo < 15 )
-                    power = 0.20;
+                    power = 0.35;
 
                 motorFrontRight.setPower( power * -1 );
                 motorFrontLeft.setPower( power );
@@ -774,23 +839,42 @@ public class Robot
             {
                 continueToTurn = false;
             }
-
-            telemetry.addData("currentHeading", currentHeading);
-            telemetry.addData( "distanceToGo", distanceToGo);
-            telemetry.update();
         }
 
         // Stop motors
         motorFrontRight.setPower(0);
         motorFrontLeft.setPower(0);
         motorCenter.setPower(0);
-
-        telemetry.addData("currentHeading", currentHeading);
-        telemetry.addData( "distanceToGo", distanceToGo);
-        telemetry.addData( "done?", "yes");
-        telemetry.update();
-
     }
+
+
+    public void turnRightTillTime( long timeToTurn, double targetPower, Telemetry telemetry )
+    {
+        boolean continueToTurn = true;
+        double power = 0.05;
+
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        while (runtime.milliseconds() < timeToTurn)
+        {
+            // Ramp up power by 3%
+            if (power < targetPower)
+                power += 0.03;
+
+            motorFrontRight.setPower( power * -1 );
+            motorFrontLeft.setPower( power );
+            motorCenter.setPower( power * -0.50 ) ;
+        }
+
+        // Stop motors
+        motorFrontRight.setPower(0);
+        motorFrontLeft.setPower(0);
+        motorCenter.setPower(0);
+    }
+
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     public void turnLeftTillDegrees( int targetDegrees, double targetPower, Telemetry telemetry )
@@ -813,8 +897,8 @@ public class Robot
                     power += 0.03;
 
                 // Ramp down power
-               // if ( distanceToGo < 15 )
-                 //   power = 0.20;
+                if ( distanceToGo < 15 )
+                   power = 0.35;
 
                 motorFrontRight.setPower(power );
                 motorFrontLeft.setPower(power * -1 );
@@ -831,6 +915,34 @@ public class Robot
         motorFrontLeft.setPower(0);
         motorCenter.setPower(0);
 
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void turnLeftTillTime( int timeToTurn, double targetPower, Telemetry telemetry )
+    {
+        boolean continueToTurn = true;
+        double power = 0.05;
+
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        while (runtime.milliseconds() < timeToTurn)
+        {
+            // Ramp up power by 3%
+            if (power < targetPower)
+                power += 0.03;
+
+            motorFrontRight.setPower(power );
+            motorFrontLeft.setPower(power * -1 );
+            motorCenter.setPower(power * 0.5) ;
+        }
+
+        // Stop motors
+        motorFrontRight.setPower(0);
+        motorFrontLeft.setPower(0);
+        motorCenter.setPower(0);
     }
 
 
@@ -895,7 +1007,7 @@ public class Robot
         return 0.0;
     }
 
-    private int getNextExtensionPos()
+    public int getNextExtensionPos()
     {
         int pos = this.motorIntakeExtension.getCurrentPosition();
         int i = 1;
@@ -907,7 +1019,7 @@ public class Robot
     }
 
 
-    private int getPreviousExtensionPos()
+    public int getPreviousExtensionPos()
     {
         int pos = this.motorIntakeExtension.getCurrentPosition();
         int i = 3;
@@ -930,20 +1042,6 @@ public class Robot
         {
             extensionCounter = getNextExtensionPos();
 
-/*            if (extensionCounter == 2 && !intakeRaised) {
-                this.motorIntakeLeftArm.setPower(-0.35);
-                this.motorIntakeRightArm.setPower(-0.35);
-                sleep(50);
-                intakePower = -0.20;
-                intakeRaised = true;
-            }
-            else {
-                intakeRaised = false;
-                this.motorIntakeLeftArm.setPower(0.0);
-                this.motorIntakeRightArm.setPower(0.0);
-                intakePower = 0.0;
-            }
-*/
             extendIntakeToPos( extensionCounter );
         }
 
@@ -991,6 +1089,7 @@ public class Robot
         return 0;
     }
 
+
     public double lowerIntakeStep1( double currentPower )
     {
         switch (intakeState)
@@ -1024,15 +1123,6 @@ public class Robot
         this.motorIntakeRightArm.setPower(-0.20);
 
         retractIntakeToPos(1);
-/*
-        while ((runtime.seconds() < 2.0) &&
-                (this.motorIntakeLeftArm.getCurrentPosition() <= startingPos + 900))
-        {
-            this.motorIntakeLeftArm.setPower(0);
-            this.motorIntakeRightArm.setPower(0);
-        }
-*/
-
 
         intakeState = IntakeState.STAGE1_DOWN;
 
@@ -1059,16 +1149,20 @@ public class Robot
         if ( intakeState != IntakeState.INTAKE_DOWN )
             return currentPower;
 
+        int prevPos = this.motorIntakeLeftArm.getCurrentPosition();
+        for (int i = 0; i < 10; ++i)
+        {
+            sleep(100);
+            if (Math.abs(prevPos - this.motorIntakeLeftArm.getCurrentPosition()) < 2)
+            {
+                calcArmPositions();
+                break;
+            }
+        }
+
+        double rampUpPower = -0.10;
+
         ElapsedTime runtime = new ElapsedTime();
-
-        double rampUpPower = -0.20;
-        double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
-
-        if (this.motorIntakeExtension.getCurrentPosition() < extensionPosition[1])
-            retractIntakeToPos(1);
-        else
-            extendIntakeToPos(1);
-
         runtime.reset();
 
         while ((runtime.seconds() < 3.0) &&
@@ -1078,15 +1172,25 @@ public class Robot
             this.motorIntakeRightArm.setPower( rampUpPower );
 
             if (rampUpPower > -0.75)
-                rampUpPower -= 0.05;
+                rampUpPower -= 0.02;
         }
 
-        this.motorIntakeLeftArm.setPower(-.20);
-        this.motorIntakeRightArm.setPower(-.20);
+        this.motorIntakeLeftArm.setPower(-0.20);
+        this.motorIntakeRightArm.setPower(-0.20);
+
+        if (this.motorIntakeExtension.getCurrentPosition() < extensionPosition[1])
+            retractIntakeToPos(1);
+        else
+            extendIntakeToPos(1);
 
         intakeState = IntakeState.STAGE1_UP;
 
         return -0.20;
+    }
+
+    public IntakeState getIntakeState()
+    {
+        return this.intakeState;
     }
 
     public double raiseIntakeStep2( double currentPower )
@@ -1099,27 +1203,23 @@ public class Robot
         ElapsedTime runtime = new ElapsedTime();
         runtime.reset();
 
-        double rampUpPower = -0.20;
+        double rampUpPower = -0.25;
 
-        double startingPos = this.motorIntakeLeftArm.getCurrentPosition();
-
-        this.servoIntake.setPosition(1);
-
-        while ((runtime.seconds() < 3.0) &&
+        while ((runtime.seconds() < 4.0) &&
               (this.motorIntakeLeftArm.getCurrentPosition() >= intakeArmPosition[2]))
         {
             this.motorIntakeLeftArm.setPower(rampUpPower);
             this.motorIntakeRightArm.setPower(rampUpPower);
 
             if (rampUpPower > -0.75)
-                rampUpPower -= 0.5;
+                rampUpPower -= 0.1;
         }
 
+        this.motorIntakeSpinner.setPower(-0.35);
         this.motorIntakeLeftArm.setPower(0);
         this.motorIntakeRightArm.setPower(0);
 
-        sleep(1200);
-        this.servoIntake.setPosition(0.5);
+        sleep(1000);
 
         intakeState = IntakeState.STAGE2_UP;
 
@@ -1146,9 +1246,9 @@ public class Robot
         else if ( rotation < 0 )    // goes up
         {
             if ( curArmPos > this.intakeArmPosition[1] )
-                power = -1;
+                power = -0.5;
             else if ( curArmPos > this.intakeArmPosition[2] - 100 )
-                power = -0.7;
+                power = -0.4;
             else if ( curArmPos >= this.intakeArmPosition[2] - 50 )
                 power = -0.20;
             else

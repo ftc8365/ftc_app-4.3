@@ -119,7 +119,7 @@ public class AutonomousGold2 extends LinearOpMode {
             mineralLocation = robot.detectMineral(telemetry);
 
             if ((mineralLocation == Robot.MineralLocation.UNKNOWN) && (runtime.seconds() > 3)) {
-                mineralLocation = Robot.MineralLocation.CENTER;
+                mineralLocation = Robot.MineralLocation.LEFT;
             }
 
             switch (mineralLocation) {
@@ -141,23 +141,23 @@ public class AutonomousGold2 extends LinearOpMode {
 
     void centerMineral()
     {
-        robot.driveBackwardTillTime(500, 0.5);
+        robot.driveBackwardTillTime(500, 0.50);
 
-        robot.turnLeftTillDegrees(345, 0.5, telemetry);
+        robot.turnLeftTillDegrees(345, 0.50, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
 
-        robot.turnRightTillDegrees(0, 0.35, telemetry);
+        robot.turnRightTillDegrees(0, 0.50, telemetry);
 
-        robot.driveForwardRotation(2.1, 0.5 );
+        robot.driveForwardRotation(2.1, 0.50 );
 
-        robot.turnRightTillDegrees(25, 0.35, telemetry);
+        robot.turnRightTillDegrees(25, 0.50, telemetry);
 
         robot.dropMarker();
 
-        robot.driveBackwardRotation(0.1, 0.5 );
+        robot.driveBackwardRotation(0.1, 0.50 );
 
-        robot.turnLeftTillDegrees(335, 0.4, telemetry);
+        robot.turnLeftTillDegrees(335, 0.50, telemetry);
 
         robot.driveBackwardRotationAlignWall(3, 0.4, 7, telemetry);
 
@@ -176,13 +176,13 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.driveForwardRotation(.35, .35);
 
-        robot.turnRightTillDegrees(25, 0.35, telemetry);
+        robot.turnRightTillDegrees(25, 0.50, telemetry);
 
         robot.dropMarker();
 
         robot.driveBackwardRotation(.35, .35);
 
-        robot.turnRightTillDegrees(305, 0.4, telemetry);
+        robot.turnRightTillDegrees(305, 0.50, telemetry);
 
         robot.driveBackwardRotationAlignWall(2.75, 0.4, 7, telemetry);
 
@@ -197,19 +197,19 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.driveForwardRotation(0.25, 0.35);
 
-        robot.turnRightTillDegrees(45, 0.35, telemetry);
+        robot.turnRightTillDegrees(45, 0.50, telemetry);
 
         robot.driveForwardRotationTurn(2.3, 0.35, 0.30);
 
         robot.driveForwardRotation(0.85, .35);
 
-        robot.turnRightTillDegrees(25, 0.35, telemetry);
+        robot.turnRightTillDegrees(25, 0.50, telemetry);
 
         robot.dropMarker();
 
         robot.driveBackwardRotation(0.1, 0.35);
 
-        robot.turnLeftTillDegrees(325, 0.4, telemetry);
+        robot.turnLeftTillDegrees(325, 0.50, telemetry);
 
         robot.driveBackwardRotationAlignWall(3.0, 0.4, 7, telemetry);
 

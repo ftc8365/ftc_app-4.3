@@ -119,7 +119,7 @@ public class AutonomousSilver1 extends LinearOpMode {
             mineralLocation = robot.detectMineral(telemetry);
 
             if ((mineralLocation == Robot.MineralLocation.UNKNOWN) && (runtime.seconds() > 3)) {
-                mineralLocation = Robot.MineralLocation.CENTER;
+                mineralLocation = Robot.MineralLocation.LEFT;
             }
 
             switch (mineralLocation) {
@@ -141,27 +141,27 @@ public class AutonomousSilver1 extends LinearOpMode {
 
     void centerMineral()
     {
-        robot.driveBackwardTillTime(500, .5);
+        robot.driveBackwardTillTime(500, .50);
 
-        robot.turnLeftTillDegrees(345, 0.5, telemetry);
+        robot.turnLeftTillDegrees(345, 0.50, telemetry);
 
         robot.driveForwardRotation(0.25, 0.35);
 
-        robot.turnRightTillDegrees(0, 0.35, telemetry);
+        robot.turnRightTillDegrees(0, 0.50, telemetry);
 
-        robot.driveForwardRotation(1, 0.5 );
+        robot.driveForwardRotation(0.9, 0.50 );
 
-        robot.driveBackwardRotation(0.70, 0.35);
+        robot.driveBackwardRotation(0.60, 0.35);
 
-        robot.driveLeftTillRotation(1.5, 0.5);
+        robot.driveLeftTillRotation(1.5, 0.7, telemetry);
 
-        robot.turnLeftTillDegrees(245, 0.4, telemetry);
+        robot.turnLeftTillDegrees(245, 0.5, telemetry);
 
         robot.driveForwardRotationAlignWall(1.5, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
-        robot.driveBackwardRotationAlignWall(2.75, 0.35, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(2.75, 0.40, 7, telemetry);
 
         robot.driveBackwardTillTime( 5000, 0.20);
     }
@@ -178,15 +178,15 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.driveBackwardRotation(0.6, 0.35);
 
-        robot.driveLeftTillRotation(0.75, 0.50);
+        robot.driveLeftTillRotation(0.75, 0.70, telemetry);
 
-        robot.turnLeftTillDegrees(245, 0.4, telemetry);
+        robot.turnLeftTillDegrees(245, 0.50, telemetry);
 
         robot.driveForwardRotationAlignWall(1.25, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
-        robot.driveBackwardRotationAlignWall(2.5, 0.35, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(2.5, 0.40, 7, telemetry);
 
         robot.driveBackwardTillTime( 5000, 0.20);
     }
@@ -199,23 +199,23 @@ public class AutonomousSilver1 extends LinearOpMode {
 
         robot.driveForwardRotation(0.25, 0.35);
 
-        robot.turnRightTillDegrees(45, 0.35, telemetry);
+        robot.turnRightTillDegrees(45, 0.50, telemetry);
 
         robot.driveForwardRotationTurn(1.6, 0.35, 0.3);
 
         robot.driveBackwardRotation(0.6, 0.35);
 
-        robot.turnRightTillDegrees(355, 0.35, telemetry);
+        robot.turnRightTillDegrees(355, 0.50, telemetry);
 
-        robot.driveLeftTillRotation(2.25, 0.7);
+        robot.driveLeftTillRotation(2.25, 0.7, telemetry);
 
-        robot.turnLeftTillDegrees(245, 0.4, telemetry);
+        robot.turnLeftTillDegrees(245, 0.50, telemetry);
 
         robot.driveForwardRotationAlignWall(1.45, 0.4, 7, telemetry);
 
         robot.dropMarker();
 
-        robot.driveBackwardRotationAlignWall(2.75, 0.35, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(2.75, 0.40, 7, telemetry);
 
         robot.driveBackwardTillTime( 5000, 0.20);
     }

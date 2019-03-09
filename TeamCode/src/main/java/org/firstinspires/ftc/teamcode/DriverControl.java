@@ -29,26 +29,9 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
-
-import java.util.Locale;
 
 
 /**
@@ -108,6 +91,10 @@ public class DriverControl extends LinearOpMode {
 
             if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right)
                 operateLiftMotor();
+            else if (gamepad1.right_trigger > 0)
+                robot.turnRightTillTime(250, 75, telemetry );
+            else if (gamepad1.left_trigger > 0)
+                robot.turnLeftTillTime(250, 75, telemetry );
             else
                 operateDriveTrain();
 
@@ -123,14 +110,281 @@ public class DriverControl extends LinearOpMode {
     public double rotatingPower = 0.0;
     public boolean useJoystick = false;
 
+
+    private double extendIntakeToPos(int pos)
+    {
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        double rampUpPower = -0.10;
+
+        while ((runtime.seconds() < 3.0) &&
+                (robot.motorIntakeExtension.getCurrentPosition() >= robot.extensionPosition[pos]) )
+        {
+            robot.motorIntakeExtension.setPower( rampUpPower );
+
+            if (rampUpPower > -0.75)
+                rampUpPower -= 0.05;
+
+            this.operateDriveTrain();
+        }
+
+        robot.motorIntakeExtension.setPower(0);
+
+        return 0.0;
+    }
+
+    public double extendIntake( double currentPower )
+    {
+        if ( robot.intakeState != Robot.IntakeState.INTAKE_DOWN )
+            return currentPower;
+
+        double intakePower = 0;
+
+        if (robot.extensionCounter <= 2)      // Allow at most 3 extensions
+        {
+            robot.extensionCounter = robot.getNextExtensionPos();
+
+            extendIntakeToPos( robot.extensionCounter );
+        }
+
+        return intakePower;
+    }
+
+    private double retractIntakeToPos(int pos)
+    {
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        double rampUpPower = -0.10;
+
+        while (runtime.seconds() < 3.0)
+        {
+            int posToGo = robot.extensionPosition[pos] - robot.motorIntakeExtension.getCurrentPosition();
+
+            if (posToGo <= 0)
+                break;
+
+            if (posToGo > 200)
+                robot.motorIntakeExtension.setPower(0.75);
+            else
+                robot.motorIntakeExtension.setPower(0.35);
+
+            this.operateDriveTrain();
+        }
+
+        robot.motorIntakeExtension.setPower(0);
+
+        return 0.0;
+    }
+
+
+    public double retractIntake( double currentPower )
+    {
+        if ( robot.intakeState != Robot.IntakeState.INTAKE_DOWN )
+            return currentPower;
+
+        if (robot.extensionCounter > 0) {
+
+            robot.extensionCounter = robot.getPreviousExtensionPos();
+
+            return retractIntakeToPos( robot.extensionCounter );
+        }
+
+        return 0;
+    }
+
+
+    public double lowerIntakeStep1( double currentPower )
+    {
+        switch (robot.intakeState)
+        {
+            case INTAKE_DOWN:
+            case STAGE1_UP:
+//            case STAGE2_UP:
+            case STAGE1_DOWN:
+                return currentPower;
+        }
+
+        ElapsedTime runtime = new ElapsedTime();
+
+        double startingPos = robot.motorIntakeLeftArm.getCurrentPosition();
+
+        double power = 0.10;
+
+        runtime.reset();
+
+        while ((runtime.seconds() < 3.0) &&
+                (robot.motorIntakeLeftArm.getCurrentPosition() <= robot.intakeArmPosition[1] - 150))
+        {
+            robot.motorIntakeLeftArm.setPower(power);
+            robot.motorIntakeRightArm.setPower(power);
+
+            if (power < 0.20)
+                power += 0.02;
+
+            this.operateDriveTrain();
+        }
+
+        robot.motorIntakeLeftArm.setPower(-0.20);
+        robot.motorIntakeRightArm.setPower(-0.20);
+
+        retractIntakeToPos(1);
+
+        robot.intakeState = Robot.IntakeState.STAGE1_DOWN;
+
+        return -0.2;
+    }
+
+    public double lowerIntakeStep2(double currentPower)
+    {
+        switch (robot.intakeState)
+        {
+            case INTAKE_DOWN:
+            case STAGE1_UP:
+//            case STAGE2_UP:
+            case STAGE1_DOWN:
+                robot.intakeState = Robot.IntakeState.INTAKE_DOWN;
+                return 0.0;
+        }
+
+        return currentPower;
+    }
+
+    public double raiseIntakeStep1( double currentPower )
+    {
+        if ( robot.intakeState != Robot.IntakeState.INTAKE_DOWN )
+            return currentPower;
+
+        int prevPos = robot.motorIntakeLeftArm.getCurrentPosition();
+        for (int i = 0; i < 10; ++i)
+        {
+            sleep(50);
+            if (Math.abs(prevPos - robot.motorIntakeLeftArm.getCurrentPosition()) < 2)
+            {
+                robot.calcArmPositions();
+                break;
+            }
+        }
+
+        double rampUpPower = -0.10;
+
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        while ((runtime.seconds() < 3.0) &&
+                (robot.motorIntakeLeftArm.getCurrentPosition() >= robot.intakeArmPosition[1]))
+        {
+            robot.motorIntakeLeftArm.setPower( rampUpPower);
+            robot.motorIntakeRightArm.setPower( rampUpPower );
+
+            if (rampUpPower > -0.75)
+                rampUpPower -= 0.02;
+
+            this.operateDriveTrain();
+        }
+
+        robot.motorIntakeLeftArm.setPower(-0.20);
+        robot.motorIntakeRightArm.setPower(-0.20);
+
+        if (robot.motorIntakeExtension.getCurrentPosition() < robot.extensionPosition[1])
+            retractIntakeToPos(1);
+        else
+            extendIntakeToPos(1);
+
+        robot.intakeState = Robot.IntakeState.STAGE1_UP;
+
+        return -0.20;
+    }
+
+    public double raiseIntakeStep2( double currentPower )
+    {
+        switch (robot.intakeState)
+        {
+//            case INTAKE_DOWN:
+//            case STAGE1_UP:
+            case STAGE2_UP:
+            case STAGE1_DOWN:
+                return currentPower;
+        }
+
+        if (robot.intakeState == Robot.IntakeState.INTAKE_DOWN)
+        {
+            int prevPos = robot.motorIntakeLeftArm.getCurrentPosition();
+            for (int i = 0; i < 10; ++i)
+            {
+                sleep(50);
+                if (Math.abs(prevPos - robot.motorIntakeLeftArm.getCurrentPosition()) < 2) {
+                    robot.calcArmPositions();
+                    break;
+                }
+            }
+
+            double rampUpPower = -0.10;
+
+            ElapsedTime runtime1 = new ElapsedTime();
+            runtime1.reset();
+
+            while ((runtime1.seconds() < 3.0) &&
+                    (robot.motorIntakeLeftArm.getCurrentPosition() >= robot.intakeArmPosition[1]))
+            {
+                robot.motorIntakeLeftArm.setPower( rampUpPower);
+                robot.motorIntakeRightArm.setPower( rampUpPower );
+
+                if (rampUpPower > -0.75)
+                    rampUpPower -= 0.02;
+
+                this.operateDriveTrain();
+            }
+
+            robot.motorIntakeLeftArm.setPower(-0.20);
+            robot.motorIntakeRightArm.setPower(-0.20);
+        }
+
+        if (robot.motorIntakeExtension.getCurrentPosition() < robot.extensionPosition[2])
+            retractIntakeToPos(2);
+        else
+            extendIntakeToPos(2);
+
+        ElapsedTime runtime = new ElapsedTime();
+        runtime.reset();
+
+        double rampUpPower = -0.25;
+
+        while ((runtime.seconds() < 4.0) &&
+                (robot.motorIntakeLeftArm.getCurrentPosition() >= robot.intakeArmPosition[2]))
+        {
+            robot.motorIntakeLeftArm.setPower(rampUpPower);
+            robot.motorIntakeRightArm.setPower(rampUpPower);
+
+            if (rampUpPower > -0.75)
+                rampUpPower -= 0.05;
+
+            this.operateDriveTrain();
+        }
+
+        robot.motorIntakeSpinner.setPower(-0.35);
+        robot.motorIntakeLeftArm.setPower(0);
+        robot.motorIntakeRightArm.setPower(0);
+
+        sleep(1000);
+
+        robot.intakeState = Robot.IntakeState.STAGE2_UP;
+
+        return 0;
+    }
+
+
+
     void operateIntake()
     {
         if ( Math.abs(gamepad2.right_stick_y) > 0.01 )
         {
-            rotatingPower = /*robot.getRotatingPower(gamepad2.right_stick_y)*/Math.pow(gamepad2.right_stick_y,3);
+            rotatingPower = robot.getRotatingPower(gamepad2.right_stick_y); //Math.pow(gamepad2.right_stick_y,3);
             useJoystick = true;
         }
-        else if (useJoystick) {
+        else if (useJoystick)
+        {
             rotatingPower = 0;
             useJoystick = false;
         }
@@ -146,27 +400,33 @@ public class DriverControl extends LinearOpMode {
             motorIntakeExtensionPower = -0.5;
         }
 
-        if (gamepad2.dpad_up) {
-            rotatingPower = robot.extendIntake( rotatingPower );
+        if (gamepad2.dpad_up)
+        {
+            rotatingPower = extendIntake( rotatingPower );
         }
-
-        if (gamepad2.dpad_down) {
-            robot.retractIntake( rotatingPower );
+        else if (gamepad2.dpad_down)
+        {
+            retractIntake( rotatingPower );
         }
-        else if (gamepad2.b) {
-            rotatingPower = robot.lowerIntakeStep1(rotatingPower);
+        else if (gamepad2.b)
+        {
+            rotatingPower = lowerIntakeStep1(rotatingPower);
             useJoystick  = false;
         }
-        else if (gamepad2.a) {
-            rotatingPower = robot.lowerIntakeStep2(rotatingPower);
+        else if (gamepad2.a)
+        {
+            rotatingPower = lowerIntakeStep2(rotatingPower);
             useJoystick  = false;
         }
-        else if (gamepad2.x) {
-            rotatingPower = robot.raiseIntakeStep1( rotatingPower );
+        else if (gamepad2.x)
+        {
+            rotatingPower = raiseIntakeStep1( rotatingPower );
             motorIntakeExtensionPower = 0;
             useJoystick  = false;
-        } else if (gamepad2.y){
-            rotatingPower = robot.raiseIntakeStep2( rotatingPower );
+        }
+        else if (gamepad2.y)
+        {
+            rotatingPower = raiseIntakeStep2( rotatingPower );
             useJoystick  = false;
         }
 
@@ -180,18 +440,22 @@ public class DriverControl extends LinearOpMode {
 
 //        telemetry.addData("Motor Left Intake Position", robot.motorIntakeLeftArm.getCurrentPosition());
 //        telemetry.addData("Motor Right Intake Position", robot.motorIntakeRightArm.getCurrentPosition());
+//        telemetry.addData("Intake State", robot.getIntakeState());
+//        telemetry.addData("Arm Position", robot.motorIntakeLeftArm.getCurrentPosition());
 
 
         if (gamepad2.left_trigger > 0)
-//            robot.servoIntake.setPosition(0);
-        robot.motorIntakeSpinner.setPower(0.60);
+        {
+            robot.motorIntakeSpinner.setPower(0.60);
+        }
         else if (gamepad2.right_trigger > 0 )
-//            robot.servoIntake.setPosition(1);
+        {
             robot.motorIntakeSpinner.setPower(-0.60);
-
+        }
         else
-//            robot.servoIntake.setPosition(0.5);
+        {
             robot.motorIntakeSpinner.setPower(0);
+        }
 
     }
 
@@ -203,10 +467,8 @@ public class DriverControl extends LinearOpMode {
         double motorFrontLeftPower  = 0;
         double motorCenterPower     = 0;
 
-        if (gamepad1.right_trigger != 0)
-            SCALING_FACTOR = 0.5;
-        else
-            SCALING_FACTOR = 0.5;
+        double MAX_STEER_POWER = 0.5;
+        SCALING_FACTOR = 0.5;
 
         double OFFSET_POWER = 0.10;
 
@@ -223,7 +485,10 @@ public class DriverControl extends LinearOpMode {
                     if (robotSteerPower < 0)
                         robotSteerPower = 0;
 
-                    this.robotSteerPower += 0.10;
+                    if (this.robotSteerPower < (MAX_STEER_POWER * 0.75))
+                        this.robotSteerPower += 0.02;
+                    else if (this.robotSteerPower < MAX_STEER_POWER)
+                        this.robotSteerPower += 0.01;
 
                     if (robotSteerPower > x1value)
                         robotSteerPower = x1value;
@@ -232,16 +497,19 @@ public class DriverControl extends LinearOpMode {
                     if (robotSteerPower > 0)
                         robotSteerPower = 0;
 
-                    this.robotSteerPower -= 0.10;
+                    if (this.robotSteerPower > -(MAX_STEER_POWER * 0.75))
+                        this.robotSteerPower -= 0.02;
+                    else if (this.robotSteerPower > -MAX_STEER_POWER)
+                        this.robotSteerPower -= 0.01;
 
                     if (robotSteerPower < x1value)
                         robotSteerPower = x1value;
                 }
             }
 
-            motorFrontRightPower    = robotSteerPower * -1.0 * SCALING_FACTOR;
-            motorFrontLeftPower     = robotSteerPower *  1.0 * SCALING_FACTOR;
-            motorCenterPower        = robotSteerPower * -0.5 * SCALING_FACTOR;
+            motorFrontRightPower    = robotSteerPower * -1.0;
+            motorFrontLeftPower     = robotSteerPower *  1.0;
+            motorCenterPower        = robotSteerPower * -0.5;
         }
         else if ( (Math.abs(gamepad1.right_stick_x) > 0.01) || (Math.abs(gamepad1.right_stick_y) > 0.01))
         {
@@ -253,8 +521,8 @@ public class DriverControl extends LinearOpMode {
 
             int joystickPostion = getJoystickPosition();
 
-            telemetry.addData("joystick DA pos", getDirectionAwareJoystickPosition());
-            telemetry.addData("joystick    pos", getJoystickPosition());
+//            telemetry.addData("joystick DA pos", getDirectionAwareJoystickPosition());
+//            telemetry.addData("joystick    pos", getJoystickPosition());
 
             if (this.rampUp)
                 robotPower = getRevUpPower( joystickPostion, targetRobotPower );
@@ -314,13 +582,13 @@ public class DriverControl extends LinearOpMode {
         robot.motorFrontLeft.setPower(motorFrontLeftPower);
         robot.motorCenter.setPower(motorCenterPower);
 
-        telemetry.addData("robot power", robotPower);
-        telemetry.addData("Robot Facing", robot.getforwardFacing() ? "FORWARD" : "BACKWARD");
-        telemetry.addData("gamepad1.right_stick_y", gamepad1.right_stick_y);
-        telemetry.addData("gamepad1.right_stick_x", gamepad1.right_stick_x);
-        telemetry.addData("motorFrontRightPower", motorFrontRightPower);
-        telemetry.addData("motorFrontLeftPower", motorFrontLeftPower);
-        telemetry.addData("motorCenterPower", motorCenterPower);
+//        telemetry.addData("robot power", robotPower);
+//        telemetry.addData("Robot Facing", robot.getforwardFacing() ? "FORWARD" : "BACKWARD");
+//        telemetry.addData("gamepad1.right_stick_y", gamepad1.right_stick_y);
+//        telemetry.addData("gamepad1.right_stick_x", gamepad1.right_stick_x);
+//        telemetry.addData("motorFrontRightPower", motorFrontRightPower);
+//        telemetry.addData("motorFrontLeftPower", motorFrontLeftPower);
+//        telemetry.addData("motorCenterPower", motorCenterPower);
     }
 
 
