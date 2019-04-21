@@ -122,12 +122,15 @@ public class Robot
     ModernRoboticsI2cRangeSensor rangeSensorBottom  = null;
     ModernRoboticsI2cRangeSensor rangeSensorFront   = null;
     ModernRoboticsI2cRangeSensor rangeSensorBack    = null;
-    ModernRoboticsI2cRangeSensor rangeSensorLander1    = null;
-    ModernRoboticsI2cRangeSensor rangeSensorLander2    = null;
 
-    private DistanceSensor sensorRange;
+//    ModernRoboticsI2cRangeSensor rangeSensorLander1    = null;
+//    ModernRoboticsI2cRangeSensor rangeSensorLander2    = null;
 
+    public DistanceSensor distanceSensorLander1 = null;
+    public DistanceSensor distanceSensorLander2 = null;
 
+    public DistanceSensor distanceSensor1 = null;
+    public DistanceSensor distanceSensor2 = null;
 
     // The IMU sensor object
     BNO055IMU imu;
@@ -230,9 +233,6 @@ public class Robot
         motorIntakeExtension.setDirection(DcMotor.Direction.FORWARD);
         motorIntakeSpinner.setDirection(DcMotor.Direction.REVERSE);
 
-
-
-
         if (brake)
         {
             motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -253,7 +253,7 @@ public class Robot
 
         extensionPosition[0] = intakePos - 50;
         extensionPosition[1] = intakePos - 1300;
-        extensionPosition[2] = intakePos - 2500;
+        extensionPosition[2] = intakePos - 3000;
         extensionPosition[3] = intakePos - 3500;
 //        extensionPosition[4] = intakePos - 4500;
 
@@ -281,9 +281,15 @@ public class Robot
         rangeSensorBottom   = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor1");
         rangeSensorFront    = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor2");
         rangeSensorBack     = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor3");
-        rangeSensorLander1  = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor4");
-        rangeSensorLander2  = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor5");
 
+//        rangeSensorLander1  = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor4");
+//        rangeSensorLander2  = hardwareMap.get(ModernRoboticsI2cRangeSensor.class,"range_sensor5");
+
+        distanceSensorLander1 = hardwareMap.get(DistanceSensor.class, "range_sensor4");
+        distanceSensorLander2 = hardwareMap.get(DistanceSensor.class, "range_sensor5");
+
+        distanceSensor1 = hardwareMap.get(DistanceSensor.class, "distance_sensor1");
+        distanceSensor2 = hardwareMap.get(DistanceSensor.class, "distance_sensor2");
     }
 
     public void initServos( HardwareMap hardwareMap )
@@ -470,7 +476,7 @@ public class Robot
     }
 
     public void dropMarker(){
-        this.motorIntakeSpinner.setPower(.5);
+        this.motorIntakeSpinner.setPower(-.5);
         sleep(500);
         this.motorIntakeSpinner.setPower(0);
     }

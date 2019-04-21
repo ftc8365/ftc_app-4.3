@@ -33,6 +33,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 
 /**
  * This file contains an minimal example of a Linear "OpMode". An OpMode is a 'program' that runs in either
@@ -102,8 +104,8 @@ public class DriverControl extends LinearOpMode {
 
             operateIntake();
 
-            telemetry.addData("Range Sensor Lander 1", robot.rangeSensorLander1.rawUltrasonic());
-            telemetry.addData("Range Sensor Lander 2", robot.rangeSensorLander2.rawUltrasonic());
+//            telemetry.addData("Range Sensor Lander 1", robot.distanceSensorLander1.rawUltrasonic());
+//            telemetry.addData("Range Sensor Lander 2", robot.rangeSensorLander2.rawUltrasonic());
 
             telemetry.update();
         }
@@ -225,8 +227,8 @@ public class DriverControl extends LinearOpMode {
             robot.motorIntakeLeftArm.setPower(power);
             robot.motorIntakeRightArm.setPower(power);
 
-            if (power < 0.20)
-                power += 0.02;
+            if (power < 0.30)
+                power += 0.05;
 
             this.operateDriveTrain();
         }
@@ -299,8 +301,8 @@ public class DriverControl extends LinearOpMode {
 
         robot.intakeState = Robot.IntakeState.STAGE1_UP;
 
-        robot.motorIntakeSpinner.setPower(1.00);
-        sleep(750);
+//        robot.motorIntakeSpinner.setPower(1.00);
+//        sleep(750);
 
         return -0.23;
     }
@@ -347,8 +349,8 @@ public class DriverControl extends LinearOpMode {
 
             robot.motorIntakeLeftArm.setPower(-0.23);
             robot.motorIntakeRightArm.setPower(-0.23);
-            robot.motorIntakeSpinner.setPower(.35);
-            sleep(750);
+            //robot.motorIntakeSpinner.setPower(.35);
+            //sleep(750);
 
         }
 
@@ -368,7 +370,7 @@ public class DriverControl extends LinearOpMode {
             robot.motorIntakeLeftArm.setPower(rampUpPower);
             robot.motorIntakeRightArm.setPower(rampUpPower);
 
-            if (rampUpPower > -.6)
+            if (rampUpPower > -.75)
                 rampUpPower -= 0.05;
 
             this.operateDriveTrain();
@@ -454,6 +456,16 @@ public class DriverControl extends LinearOpMode {
 //        telemetry.addData("Intake State", robot.getIntakeState());
 //        telemetry.addData("Arm Position", robot.motorIntakeLeftArm.getCurrentPosition());
 
+        double distance1 = robot.distanceSensor1.getDistance(DistanceUnit.CM);
+        double distance2 = robot.distanceSensor2.getDistance(DistanceUnit.CM);
+
+
+        telemetry.addData("distance1", String.format("%.01f cm", distance1));
+        telemetry.addData("distance2", String.format("%.01f cm", distance2));
+
+        telemetry.addData("Right Mineral", distance1 < 10 ? "IN" : "OUT");
+        telemetry.addData("Left Mineral",  distance2 < 10 ? "IN" : "OUT");
+
 
         if (gamepad2.left_trigger > 0)
         {
@@ -461,7 +473,10 @@ public class DriverControl extends LinearOpMode {
         }
         else if (gamepad2.right_trigger > 0 )
         {
-            robot.motorIntakeSpinner.setPower(-0.90);
+            if (distance1 >= 10 || distance2 >= 10)
+                robot.motorIntakeSpinner.setPower(-0.90);
+            else
+                robot.motorIntakeSpinner.setPower(0);
         }
         else
         {
@@ -756,7 +771,7 @@ public class DriverControl extends LinearOpMode {
     {
         double targetPower = -.65;
         double centerPower = -0.35;
-        double distance = 1.25;
+        double distance = 2.0;
         int targetRange = 10;
 
         int initPosition = robot.motorFrontRight.getCurrentPosition();
@@ -794,7 +809,7 @@ public class DriverControl extends LinearOpMode {
         {
             if (isGamepad1JoystickMoved())
                 cont = false;
-            if (robot.motorFrontRight.getCurrentPosition() - initPosition <= -1000 * 0.5)
+            if (robot.motorFrontRight.getCurrentPosition() - initPosition <= -1000 * .75)
                 cont = false;
 
             if (power > targetPower)
@@ -822,15 +837,20 @@ public class DriverControl extends LinearOpMode {
 
     void alignToLander()
     {
-        int targetRange = 15;
+
+        int targetRange = 30;
         double power = -0.40;
 
         boolean cont = true;
         while (cont)
         {
+            if (isGamepad1JoystickMoved())
+                break;
 
-            int range1 =robot.rangeSensorLander1.rawUltrasonic();
-            int range2 =robot.rangeSensorLander2.rawUltrasonic();
+            //            int range1 =robot.rangeSensorLander1.rawUltrasonic();
+//            int range2 =robot.rangeSensorLander2.rawUltrasonic();
+            int range1 = (int)robot.distanceSensorLander1.getDistance(DistanceUnit.CM);
+            int range2 = (int)robot.distanceSensorLander2.getDistance(DistanceUnit.CM);
 
             int range = Math.min(range1, range2);
             int diff = Math.abs( range1 - range2 );
