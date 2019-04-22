@@ -483,9 +483,9 @@ public class Robot
 
     public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
     {
-        motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         int initPosition = motorFrontRight.getCurrentPosition();
 
@@ -530,24 +530,13 @@ public class Robot
             if (sensorBack > 250)
                 sensorBack = lastBackSensorValue;
 
-            if (sensorFront == 255 && sensorBack == 255)
+            if (sensorFront >= 255 && sensorBack >= 255)
                 continue;
 
-            if (Math.abs(sensorBack - sensorFront) > 2)
+            if (Math.min(sensorFront, sensorBack) > distance + 3)   // > 10
             {
-                motorCenterPower = (sensorBack > sensorFront) ? 0.25 : - 0.25;
-
-                motorRightPower = motorCenterPower;
-                motorLeftPower = -1 * motorCenterPower;
-
-                telemetry.addData("Motion", "Turn");
-
-                turning = true;
-            }
-            else if (Math.min(sensorFront, sensorBack) > distance + 3)   // > 10
-            {
-                if (rightRampUp < 0.60)
-                    rightRampUp += 0.03;
+                if (rightRampUp < 0.50)
+                    rightRampUp += 0.05;
 
                 double offsetPower = this.getSidewayOffsetPower(rightRampUp);
 
@@ -558,6 +547,17 @@ public class Robot
                 leftRampUp = 0.20;
 
                 telemetry.addData("Motion", "RIGHT");
+            }
+            else if (Math.abs(sensorBack - sensorFront) > 2)
+            {
+                motorCenterPower = (sensorBack > sensorFront) ? 0.25 : - 0.25;
+
+                motorRightPower = motorCenterPower;
+                motorLeftPower = -1 * motorCenterPower;
+
+                telemetry.addData("Motion", "Turn");
+
+                turning = true;
             }
             else if (Math.min(sensorFront, sensorBack) < distance - 3)  // < 4
             {
@@ -601,10 +601,6 @@ public class Robot
             telemetry.update();
         }
 
-        motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         motorFrontRight.setPower(0);
         motorFrontLeft.setPower(0);
         motorCenter.setPower(0);
@@ -644,12 +640,11 @@ public class Robot
     {
         double offsetPower = 0.0;
 
-        if (centerPower >= 0.60)
-            offsetPower = 0.16;
-        else if (centerPower >= 0.40)
-            offsetPower = 0.15;
-        else if (centerPower >= 0.20)
+        if (centerPower < 0.20)
             offsetPower = 0.10;
+        else if (centerPower < 0.40)
+            offsetPower = 0.15;
+        else offsetPower = 0.18;
 
         return offsetPower;
     }

@@ -159,7 +159,7 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.turnLeftTillDegrees(245, 0.5, telemetry);
 
-        robot.driveForwardRotation(0.15, 0.35);
+        robot.driveForwardRotation(0.15, 0.40);
 
         robot.driveForwardRotationAlignWall(3, 0.4, 7, telemetry);
 

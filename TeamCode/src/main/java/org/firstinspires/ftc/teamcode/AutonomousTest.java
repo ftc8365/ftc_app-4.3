@@ -74,7 +74,7 @@ public class AutonomousTest extends LinearOpMode {
         robot.initSensors( hardwareMap );
         robot.initServos( hardwareMap );
         robot.initGyroSensor( hardwareMap );
-        robot.initTensorFlowObjectDetection( hardwareMap );
+//        robot.initTensorFlowObjectDetection( hardwareMap );
 
         robot.setPhoneStartingPostion();
         runtime.reset();
@@ -105,21 +105,10 @@ public class AutonomousTest extends LinearOpMode {
 
         if (opModeIsActive())
         {
-
-//            robot.driveBackwardRotation(0.1, 0.50 );
-//
-//            robot.turnLeftTillDegrees(245, 0.5, telemetry);
-
-//            robot.lowerRobot();
-
-//            robot.driveBackwardTillTime(500, 0.50);
-
-
-            robot.driveLeftTillRotation(1.25, 0.7, telemetry);
-
-
+            robot.driveForwardRotationAlignWall(0.50, 0.4, 7, telemetry);
         }
 
-        robot.tfod.shutdown();
+
+//        robot.tfod.shutdown();
     }
 }

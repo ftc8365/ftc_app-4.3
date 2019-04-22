@@ -628,8 +628,13 @@ public class DriverControl extends LinearOpMode {
 //        telemetry.addData("motorFrontRightPower", motorFrontRightPower);
 //        telemetry.addData("motorFrontLeftPower", motorFrontLeftPower);
 //        telemetry.addData("motorCenterPower", motorCenterPower);
-        telemetry.addData("motorCenterPosition", robot.motorCenter.getCurrentPosition());
-        telemetry.addData("motorFRPosition",robot.motorFrontRight.getCurrentPosition());
+//        telemetry.addData("motorCenterPosition", robot.motorCenter.getCurrentPosition());
+//        telemetry.addData("motorFRPosition",robot.motorFrontRight.getCurrentPosition());
+
+        telemetry.addData("Landerdistance1", String.format("%.01f cm", robot.distanceSensorLander1.getDistance(DistanceUnit.CM)));
+        telemetry.addData("Landerdistance2", String.format("%.01f cm", robot.distanceSensorLander2.getDistance(DistanceUnit.CM)));
+        telemetry.addData("LanderDiff", Math.abs(robot.distanceSensorLander1.getDistance(DistanceUnit.CM)-robot.distanceSensorLander2.getDistance(DistanceUnit.CM)));
+
     }
 
 
@@ -758,7 +763,8 @@ public class DriverControl extends LinearOpMode {
     {
        double motorPower = 0;
 
-        if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right) {
+        if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right)
+        {
             if (gamepad1.right_stick_y > 0.1)
                 motorPower = 1.0;
 
@@ -819,60 +825,65 @@ public class DriverControl extends LinearOpMode {
             robot.motorFrontLeft.setPower( -1 * power );
         }
 
-        //alignToLander();
-
         robot.motorFrontRight.setPower(0);
         robot.motorFrontLeft.setPower(0);
-
-        /*while(robot.rangeSensorLander1.rawUltrasonic() > robot.rangeSensorLander2.rawUltrasonic()){
-            robot.motorCenter.setPower(-.25);
-        }
-
-        while(robot.rangeSensorLander1.rawUltrasonic() < robot.rangeSensorLander2.rawUltrasonic()){
-            robot.motorCenter.setPower(.25);
-        }*/
 
         robot.motorCenter.setPower(0);
     }
 
     void alignToLander()
     {
+        double targetRange = 28.0;
+        double DISTANCE_THRESHOLD   = 1.25;
+        double TURN_THRESHOLD   = 1.25;
 
-        int targetRange = 30;
-        double power = -0.40;
+
+        double rampUpPower =  0.0;
 
         boolean cont = true;
+
         while (cont)
         {
             if (isGamepad1JoystickMoved())
                 break;
 
-            //            int range1 =robot.rangeSensorLander1.rawUltrasonic();
-//            int range2 =robot.rangeSensorLander2.rawUltrasonic();
-            int range1 = (int)robot.distanceSensorLander1.getDistance(DistanceUnit.CM);
-            int range2 = (int)robot.distanceSensorLander2.getDistance(DistanceUnit.CM);
+            double range1 = robot.distanceSensorLander1.getDistance(DistanceUnit.CM);
+            double range2 = robot.distanceSensorLander2.getDistance(DistanceUnit.CM);
 
-            int range = Math.min(range1, range2);
-            int diff = Math.abs( range1 - range2 );
-
-            if ((range1 <= targetRange) && (range2 <= targetRange) && (diff <= 3))
-                cont = false;
-
-
-            if ( (range < targetRange + 3) && diff > 3 )
+            // First, center the robot
+            if ( Math.abs( range1 - range2 ) >= TURN_THRESHOLD)
             {
                 int mulitpler = range1 > range2 ? 1 : -1;
 
-                robot.motorFrontRight.setPower(mulitpler * 0.2);
-                robot.motorFrontLeft.setPower(mulitpler * -0.2);
-                robot.motorCenter.setPower(mulitpler * 0.4);
+                robot.motorFrontRight.setPower(mulitpler * 0.15);
+                robot.motorFrontLeft.setPower(mulitpler * -0.15);
+                robot.motorCenter.setPower(mulitpler * 0.35);
+            }
+            else if ( Math.min(range1, range2) >= targetRange + DISTANCE_THRESHOLD)
+            {
+                if (rampUpPower >= 0)
+                    rampUpPower = -0.10;
+                else if (rampUpPower > -0.40)
+                    rampUpPower -= 0.02;
 
+                robot.motorFrontRight.setPower(rampUpPower);
+                robot.motorFrontLeft.setPower(rampUpPower);
+                robot.motorCenter.setPower(0);
+            }
+            else if ( Math.min(range1, range2) <= targetRange - DISTANCE_THRESHOLD)
+            {
+                if (rampUpPower <= 0)
+                    rampUpPower = 0.10;
+                else if (rampUpPower < 0.40)
+                    rampUpPower += 0.02;
+
+                robot.motorFrontRight.setPower( rampUpPower );
+                robot.motorFrontLeft.setPower( rampUpPower );
+                robot.motorCenter.setPower(0);
             }
             else
             {
-                robot.motorFrontRight.setPower(power);
-                robot.motorFrontLeft.setPower(power);
-                robot.motorCenter.setPower(0);
+                break;
             }
         }
 
@@ -935,12 +946,6 @@ public class DriverControl extends LinearOpMode {
         robot.motorFrontRight.setPower(0);
         robot.motorFrontLeft.setPower(0);
         robot.motorCenter.setPower(0);
-
-
-//            robot.motorFrontRight.setPower(0);
-//            robot.motorFrontLeft.setPower(0);
-//            robot.motorCenter.setPower(0);
-
     }
 
     boolean isGamepad1JoystickMoved(){

@@ -69,6 +69,7 @@ public class SensorREV2mDistance extends LinearOpMode {
         while(opModeIsActive()) {
             telemetry.addData("distanceSensorLander1", String.format("%.01f cm", robot.distanceSensorLander1.getDistance(DistanceUnit.CM)));
             telemetry.addData("distanceSensorLander2", String.format("%.01f cm", robot.distanceSensorLander2.getDistance(DistanceUnit.CM)));
+
             telemetry.addData("distance1", String.format("%.01f cm", robot.distanceSensor1.getDistance(DistanceUnit.CM)));
             telemetry.addData("distance2", String.format("%.01f cm", robot.distanceSensor2.getDistance(DistanceUnit.CM)));
             telemetry.update();
