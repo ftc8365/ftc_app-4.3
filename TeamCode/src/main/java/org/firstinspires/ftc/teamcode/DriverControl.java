@@ -837,7 +837,6 @@ public class DriverControl extends LinearOpMode {
         double DISTANCE_THRESHOLD   = 1.25;
         double TURN_THRESHOLD   = 1.25;
 
-
         double rampUpPower =  0.0;
 
         boolean cont = true;
