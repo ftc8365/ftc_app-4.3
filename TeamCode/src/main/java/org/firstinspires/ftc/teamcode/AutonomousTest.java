@@ -38,6 +38,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
 import java.util.List;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 
 /**
@@ -54,7 +55,7 @@ import java.util.List;
  */
 
 @Autonomous(name="Autonomous Test", group="Autonomous")
-//@Disabled
+@Disabled
 public class AutonomousTest extends LinearOpMode {
 
     //////////////////////////////////////////////////////////////////////

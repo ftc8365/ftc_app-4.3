@@ -78,7 +78,6 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.setPhoneStartingPostion();
 
-
         while(!opModeIsActive() && !isStopRequested())
         {
             telemetry.addData("Gyro Degrees", robot.getCurrentPositionInDegrees());

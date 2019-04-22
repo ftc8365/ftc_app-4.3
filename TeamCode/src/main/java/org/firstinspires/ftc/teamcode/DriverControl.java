@@ -69,14 +69,25 @@ public class DriverControl extends LinearOpMode {
     public void runOpMode()
     {
         robot.initMotors( hardwareMap, true );
-        robot.initGyroSensor( hardwareMap );
         robot.initSensors( hardwareMap );
         robot.initServos( hardwareMap );
+        robot.initGyroSensor( hardwareMap );
 
         robot.setPhoneStartingPostion();
 
         while (!opModeIsActive() && !isStopRequested())
         {
+            telemetry.addData("Gyro Degrees",           robot.getCurrentPositionInDegrees());
+            telemetry.addData("distanceSensorLander1",  String.format("%.01f cm", robot.distanceSensorLander1.getDistance(DistanceUnit.CM)));
+            telemetry.addData("distanceSensorLander2",  String.format("%.01f cm", robot.distanceSensorLander2.getDistance(DistanceUnit.CM)));
+            telemetry.addData("distance1",              String.format("%.01f cm", robot.distanceSensor1.getDistance(DistanceUnit.CM)));
+            telemetry.addData("distance2",              String.format("%.01f cm", robot.distanceSensor2.getDistance(DistanceUnit.CM)));
+            telemetry.addData("rangeSensorBottom",      robot.rangeSensorBottom.rawUltrasonic());
+            telemetry.addData("rangeSensorFront",       robot.rangeSensorFront.rawUltrasonic());
+            telemetry.addData("rangeSensorBack",        robot.rangeSensorBack.rawUltrasonic());
+            telemetry.addData("motorFrontRight.curPos", robot.motorFrontRight.getCurrentPosition());
+            telemetry.addData("motorCenter.curPos",     robot.motorCenter.getCurrentPosition());
+            telemetry.addData("",  "------------------------------");
             telemetry.addData(">", "Press Play to start");
             telemetry.update();
         }
@@ -103,9 +114,6 @@ public class DriverControl extends LinearOpMode {
                 operateDriveTrain();
 
             operateIntake();
-
-//            telemetry.addData("Range Sensor Lander 1", robot.distanceSensorLander1.rawUltrasonic());
-//            telemetry.addData("Range Sensor Lander 2", robot.rangeSensorLander2.rawUltrasonic());
 
             telemetry.update();
         }
@@ -633,7 +641,7 @@ public class DriverControl extends LinearOpMode {
 
         telemetry.addData("Landerdistance1", String.format("%.01f cm", robot.distanceSensorLander1.getDistance(DistanceUnit.CM)));
         telemetry.addData("Landerdistance2", String.format("%.01f cm", robot.distanceSensorLander2.getDistance(DistanceUnit.CM)));
-        telemetry.addData("LanderDiff", Math.abs(robot.distanceSensorLander1.getDistance(DistanceUnit.CM)-robot.distanceSensorLander2.getDistance(DistanceUnit.CM)));
+        telemetry.addData("LanderDiff", "%.01f cm", Math.abs(robot.distanceSensorLander1.getDistance(DistanceUnit.CM)-robot.distanceSensorLander2.getDistance(DistanceUnit.CM)));
 
     }
 
@@ -807,7 +815,7 @@ public class DriverControl extends LinearOpMode {
 
         cont = true;
         initPosition = robot.motorFrontRight.getCurrentPosition();
-        robot.motorCenter.setPower( -1 );
+        robot.motorCenter.setPower( -0.85 );
 
         power = -0.20;
 
