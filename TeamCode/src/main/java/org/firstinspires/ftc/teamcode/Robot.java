@@ -87,6 +87,8 @@ public class Robot
 
     public int extensionCounter = 0;
 
+    public ElapsedTime eTime;
+
     /////////////////////
     // Declare vuforia tensorflow variables
     /////////////////////
@@ -183,7 +185,7 @@ public class Robot
 
     public void lowerRobot()
     {
-        if (rangeSensorBottom.rawUltrasonic() >= 5)
+        if (rangeSensorBottom.rawUltrasonic() >= 11)
         {
 
             ElapsedTime runtime = new ElapsedTime();
@@ -194,7 +196,7 @@ public class Robot
                 motorLift.setPower(1.0);
             }
 
-            sleep(350);
+            sleep(450);
 
             motorLift.setPower(0.0);
         }
@@ -206,6 +208,9 @@ public class Robot
 
     public void initMotors( HardwareMap hardwareMap, boolean brake )
     {
+        eTime = new ElapsedTime();
+
+
         motorFrontRight     = hardwareMap.get(DcMotor.class, "motor1");
         motorFrontLeft      = hardwareMap.get(DcMotor.class, "motor2");
         motorCenter         = hardwareMap.get(DcMotor.class, "motor3");
@@ -225,13 +230,14 @@ public class Robot
         motorFrontRight.setDirection(DcMotor.Direction.REVERSE);
         motorFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         motorCenter.setDirection(DcMotor.Direction.REVERSE);
-        motorLift.setDirection(DcMotor.Direction.FORWARD);
+        motorLift.setDirection(DcMotor.Direction.REVERSE);
         motorLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         motorIntakeLeftArm.setDirection(DcMotor.Direction.REVERSE);
         motorIntakeRightArm.setDirection(DcMotor.Direction.FORWARD);
         motorIntakeExtension.setDirection(DcMotor.Direction.FORWARD);
         motorIntakeSpinner.setDirection(DcMotor.Direction.REVERSE);
+        motorIntakeSpinner.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         if (brake)
         {
@@ -413,7 +419,7 @@ public class Robot
     }
 
     ////////////////////////////////////////////////////////
-    public void driveBackwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
+    public void driveBackwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry, ElapsedTime autonomusTimer)
     {
         motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -429,6 +435,10 @@ public class Robot
         motorCenter.setPower(0.0);
 
         while (cont) {
+
+            if (autonomusTimer.seconds() >= 29)
+                break;
+
             if (motorFrontRight.getCurrentPosition() - initPosition <= -1000 * rotation)
                 cont = false;
 
@@ -481,7 +491,7 @@ public class Robot
         this.motorIntakeSpinner.setPower(0);
     }
 
-    public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry)
+    public void driveForwardRotationAlignWall(double rotation, double targetPower, double distance, Telemetry telemetry, ElapsedTime autonomusTimer)
     {
         motorFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -514,6 +524,9 @@ public class Robot
             motorLeftPower = 0;
             motorRightPower = 0;
 
+            if (autonomusTimer.seconds() >= 29)
+                break;
+
             if (motorFrontRight.getCurrentPosition() - initPosition >= 1000 * rotation) {
                 cont = false;
                 continue;
@@ -535,7 +548,7 @@ public class Robot
 
             if (Math.min(sensorFront, sensorBack) > distance + 3)   // > 10
             {
-                if (rightRampUp < 0.50)
+                if (rightRampUp < 0.6)
                     rightRampUp += 0.05;
 
                 double offsetPower = this.getSidewayOffsetPower(rightRampUp);
@@ -654,7 +667,7 @@ public class Robot
     {
         int initPosition = motorCenter.getCurrentPosition();
 
-        double power = 0.15;
+        double power = 0.10;
 
         motorFrontRight.setPower( 0 );
         motorFrontLeft.setPower( 0 );
@@ -665,7 +678,7 @@ public class Robot
                 break;
 
             if (power < targetPower)
-                power += 0.005;
+                power += 0.01;
 
             double offsetPower = getSidewayOffsetPower(power);
 
@@ -702,14 +715,14 @@ public class Robot
 
 
     ////////////////////////////////////////////////////////
-    public void driveBackwardTillTime( long milliseconds, double targetPower )
+    public void driveBackwardTillTime( long milliseconds, double targetPower, Telemetry telemetry  )
     {
         motorCenter.setPower( 0.0 );
 
         motorFrontRight.setPower( targetPower * -1 );
         motorFrontLeft.setPower( targetPower * -1 );
 
-        sleep( milliseconds );
+        delay( milliseconds, telemetry );
 
         motorFrontRight.setPower(0);
         motorFrontLeft.setPower(0);
@@ -1353,6 +1366,15 @@ public class Robot
 
         telemetry.addData("Gold Mineral Position", location);
         return location;
+
+    }
+
+    public void delay(double milliseconds, Telemetry telemetry){
+
+        eTime.reset();
+        while ((eTime.milliseconds() < milliseconds)){
+            telemetry.addData("a", "a");
+        }
 
     }
 

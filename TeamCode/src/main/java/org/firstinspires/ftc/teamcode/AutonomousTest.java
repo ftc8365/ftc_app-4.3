@@ -55,7 +55,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
  */
 
 @Autonomous(name="Autonomous Test", group="Autonomous")
-@Disabled
+//@Disabled
 public class AutonomousTest extends LinearOpMode {
 
     //////////////////////////////////////////////////////////////////////
@@ -65,6 +65,8 @@ public class AutonomousTest extends LinearOpMode {
     ElapsedTime runtime = new ElapsedTime();
 
     Robot robot = new Robot();
+
+    ElapsedTime autonomusTimer = new ElapsedTime();
 
 
 
@@ -93,6 +95,7 @@ public class AutonomousTest extends LinearOpMode {
             telemetry.addData(">", "Press Play to start");
             telemetry.update();
         }
+        autonomusTimer.reset();
 
         runtime.reset();
         //Start the logging of measured acceleration
@@ -106,7 +109,12 @@ public class AutonomousTest extends LinearOpMode {
 
         if (opModeIsActive())
         {
-            robot.driveForwardRotationAlignWall(0.50, 0.4, 7, telemetry);
+            //robot.driveForwardRotationAlignWall(0.50, 0.4, 7, telemetry);
+
+            //robot.driveRightTillRotation(1,.7, telemetry);
+            //robot.driveLeftTillRotation(1,.7,telemetry);
+
+            robot.driveForwardRotationAlignWall(.5, .4, 7, telemetry, autonomusTimer);
         }
 
 

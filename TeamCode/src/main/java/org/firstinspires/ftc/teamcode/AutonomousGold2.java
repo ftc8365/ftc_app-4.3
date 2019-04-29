@@ -65,6 +65,8 @@ public class AutonomousGold2 extends LinearOpMode {
 
     Robot robot = new Robot();
 
+    ElapsedTime autonomusTimer = new ElapsedTime();
+
 
 
     @Override
@@ -97,6 +99,7 @@ public class AutonomousGold2 extends LinearOpMode {
         ///////////////////////////////////////
         // Start of program
         ///////////////////////////////////////
+        autonomusTimer.reset();
 
         runtime.reset();
 
@@ -141,7 +144,7 @@ public class AutonomousGold2 extends LinearOpMode {
 
     void centerMineral()
     {
-        robot.driveBackwardTillTime(500, 0.50);
+        robot.driveBackwardTillTime(500, 0.50, telemetry);
 
         robot.turnLeftTillDegrees(345, 0.50, telemetry);
 
@@ -159,14 +162,15 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.turnLeftTillDegrees(335, 0.50, telemetry);
 
-        robot.driveBackwardRotationAlignWall(3, 0.4, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(3, 0.4, 7, telemetry, autonomusTimer);
 
-        robot.driveBackwardTillTime( 5000, 0.20);
+        if (autonomusTimer.seconds() <= 24)
+            robot.driveBackwardTillTime( 5000, 0.20, telemetry);
     }
 
     void leftMineral()
     {
-        robot.driveBackwardTillTime(500, .5);
+        robot.driveBackwardTillTime(500, .5, telemetry);
 
         robot.turnLeftTillDegrees(330, 0.5, telemetry);
 
@@ -184,14 +188,15 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.turnRightTillDegrees(305, 0.50, telemetry);
 
-        robot.driveBackwardRotationAlignWall(2.75, 0.4, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(2.75, 0.4, 7, telemetry, autonomusTimer);
 
-        robot.driveBackwardTillTime( 5000, 0.20);
+        if (autonomusTimer.seconds() <= 24)
+            robot.driveBackwardTillTime( 5000, 0.20, telemetry);
     }
 
     void rightMineral()
     {
-        robot.driveBackwardTillTime(500, .5);
+        robot.driveBackwardTillTime(500, .5, telemetry);
 
         robot.turnLeftTillDegrees(345, 0.5, telemetry);
 
@@ -211,9 +216,10 @@ public class AutonomousGold2 extends LinearOpMode {
 
         robot.turnLeftTillDegrees(325, 0.50, telemetry);
 
-        robot.driveBackwardRotationAlignWall(3.0, 0.4, 7, telemetry);
+        robot.driveBackwardRotationAlignWall(3.0, 0.4, 7, telemetry, autonomusTimer);
 
-        robot.driveBackwardTillTime( 5000, 0.20);
+        if (autonomusTimer.seconds() <= 24)
+            robot.driveBackwardTillTime( 5000, 0.20, telemetry);
 
     }
 

@@ -104,6 +104,9 @@ public class DriverControl extends LinearOpMode {
             if (gamepad1.b)
                 robot.setforwardFacing( true );
 
+            if (!(gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right))
+                robot.motorLift.setPower(0);
+
             if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right)
                 operateLiftMotor();
             else if (gamepad1.right_trigger > 0)
@@ -225,30 +228,39 @@ public class DriverControl extends LinearOpMode {
 
         double startingPos = robot.motorIntakeLeftArm.getCurrentPosition();
 
-        double power = 0.10;
+        double power = 0.30;
 
         runtime.reset();
 
         while ((runtime.seconds() < 3.0) &&
-                (robot.motorIntakeLeftArm.getCurrentPosition() <= robot.intakeArmPosition[1] - 150))
+                (robot.motorIntakeLeftArm.getCurrentPosition() <= robot.intakeArmPosition[1] - 300))
         {
             robot.motorIntakeLeftArm.setPower(power);
             robot.motorIntakeRightArm.setPower(power);
 
-            if (power < 0.30)
-                power += 0.05;
+            if (power > 0.10)
+                power -= 0.01;
 
             this.operateDriveTrain();
         }
 
-        robot.motorIntakeLeftArm.setPower(-0.20);
-        robot.motorIntakeRightArm.setPower(-0.20);
+        power = -.10;
+        while ((runtime.seconds() < 3.0) &&
+                (robot.motorIntakeLeftArm.getCurrentPosition() <= robot.intakeArmPosition[1]))
+        {
+            robot.motorIntakeLeftArm.setPower(power);
+            robot.motorIntakeRightArm.setPower(power);
+            this.operateDriveTrain();
+        }
+
+        robot.motorIntakeLeftArm.setPower(-0.23);
+        robot.motorIntakeRightArm.setPower(-0.23);
 
         retractIntakeToPos(1);
 
         robot.intakeState = Robot.IntakeState.STAGE1_DOWN;
 
-        return -0.2;
+        return -0.23;
     }
 
     public double lowerIntakeStep2(double currentPower)
@@ -370,7 +382,24 @@ public class DriverControl extends LinearOpMode {
         ElapsedTime runtime = new ElapsedTime();
         runtime.reset();
 
-        double rampUpPower = -0.4;
+
+        int currentPos = robot.motorIntakeLeftArm.getCurrentPosition();
+        double rampUpPower2 = -0.4;
+
+        while ((runtime.seconds() < 4.0) &&
+                (robot.motorIntakeLeftArm.getCurrentPosition() >= currentPos - 450))
+        {
+            robot.motorIntakeLeftArm.setPower(rampUpPower2);
+            robot.motorIntakeRightArm.setPower(rampUpPower2);
+
+            if (rampUpPower2 > -.75)
+                rampUpPower2 -= 0.05;
+
+            this.operateDriveTrain();
+        }
+
+        double rampUpPower = -0.45;
+
 
         while ((runtime.seconds() < 4.0) &&
                 (robot.motorIntakeLeftArm.getCurrentPosition() >= robot.intakeArmPosition[2]))
@@ -378,7 +407,7 @@ public class DriverControl extends LinearOpMode {
             robot.motorIntakeLeftArm.setPower(rampUpPower);
             robot.motorIntakeRightArm.setPower(rampUpPower);
 
-            if (rampUpPower > -.75)
+            if (rampUpPower > -.45)
                 rampUpPower -= 0.05;
 
             this.operateDriveTrain();
@@ -479,10 +508,10 @@ public class DriverControl extends LinearOpMode {
         {
             robot.motorIntakeSpinner.setPower(0.90);
         }
-        else if (gamepad2.right_trigger > 0 )
+        else if (gamepad2.right_trigger > 0)
         {
-            if (distance1 >= 10 || distance2 >= 10)
-                robot.motorIntakeSpinner.setPower(-0.90);
+            if (distance1 >= 10 || distance2 >= 10 || gamepad2.dpad_up )
+                robot.motorIntakeSpinner.setPower(-0.85);
             else
                 robot.motorIntakeSpinner.setPower(0);
         }
@@ -599,7 +628,7 @@ public class DriverControl extends LinearOpMode {
                         robotSteerPower = 0;
 
                     if (this.robotSteerPower < (MAX_STEER_POWER * 0.75))
-                        this.robotSteerPower += 0.05;
+                        this.robotSteerPower += 0.1;
                     else if (this.robotSteerPower < MAX_STEER_POWER)
                         this.robotSteerPower += 0.02;
 
@@ -611,7 +640,7 @@ public class DriverControl extends LinearOpMode {
                         robotSteerPower = 0;
 
                     if (this.robotSteerPower > -(MAX_STEER_POWER * 0.75))
-                        this.robotSteerPower -= 0.05;
+                        this.robotSteerPower -= 0.1;
                     else if (this.robotSteerPower > -MAX_STEER_POWER)
                         this.robotSteerPower -= 0.02;
 
@@ -651,7 +680,7 @@ public class DriverControl extends LinearOpMode {
         double power = robotPower;
         double rampUpRate = 0.20;
         if (getJoystickPosition() == 1 || getJoystickPosition() == 5)
-            rampUpRate = 0.05;
+            rampUpRate = 0.15;
 
         if (targetRobotPower == 0 )
         {
@@ -773,14 +802,16 @@ public class DriverControl extends LinearOpMode {
 
         if (gamepad1.dpad_up || gamepad1.dpad_down || gamepad1.dpad_left || gamepad1.dpad_right)
         {
-            if (gamepad1.right_stick_y > 0.1)
+            if (gamepad1.right_stick_y > 0.2)
                 motorPower = 1.0;
 
-            if (gamepad1.right_stick_y < -0.1)
+            if (gamepad1.right_stick_y < -0.2)
                 motorPower = -1.0;
         }
+
         robot.motorLift.setPower(motorPower);
     }
+
     void craterToLander()
     {
         double targetPower = -.65;

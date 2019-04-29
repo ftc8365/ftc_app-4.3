@@ -63,6 +63,8 @@ public class AutonomousGold1 extends LinearOpMode {
 
     ElapsedTime runtime = new ElapsedTime();
 
+    ElapsedTime autonomusTimer = new ElapsedTime();
+
     Robot robot = new Robot();
 
 
@@ -96,7 +98,7 @@ public class AutonomousGold1 extends LinearOpMode {
         ///////////////////////////////////////
         // Start of program
         ///////////////////////////////////////
-
+        autonomusTimer.reset();
         runtime.reset();
 
         robot.imu.startAccelerationIntegration(new Position(), new Velocity(), 1000);
@@ -140,7 +142,7 @@ public class AutonomousGold1 extends LinearOpMode {
 
     void centerMineral()
     {
-        robot.driveBackwardTillTime(500, 0.50);
+        robot.driveBackwardTillTime(500, 0.50, telemetry);
 
         robot.turnLeftTillDegrees(345, 0.50, telemetry);
 
@@ -160,14 +162,15 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.driveForwardRotation(0.15, 0.40);
 
-        robot.driveForwardRotationAlignWall(3, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(3, 0.4, 7, telemetry, autonomusTimer);
 
-        robot.driveForwardTillTime( 5000, 0.20);
+        if (autonomusTimer.seconds() <= 24)
+            robot.driveForwardTillTime( 5000, 0.20);
     }
 
     void leftMineral()
     {
-        robot.driveBackwardTillTime(500, .5);
+        robot.driveBackwardTillTime(500, .5, telemetry);
 
         robot.turnLeftTillDegrees(330, 0.5, telemetry);
 
@@ -185,14 +188,15 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.turnRightTillDegrees(215, 0.50, telemetry);
 
-        robot.driveForwardRotationAlignWall(2.75, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(2.75, 0.4, 7, telemetry, autonomusTimer);
 
+        if (autonomusTimer.seconds() <= 24)
         robot.driveForwardTillTime( 5000, 0.20);
     }
 
     void rightMineral()
     {
-        robot.driveBackwardTillTime(500, .5);
+        robot.driveBackwardTillTime(500, .5, telemetry);
 
         robot.turnLeftTillDegrees(345, 0.5, telemetry);
 
@@ -216,9 +220,10 @@ public class AutonomousGold1 extends LinearOpMode {
 
         robot.driveRightTillRotation(0.2, 0.5, telemetry);
 
-        robot.driveForwardRotationAlignWall(3.25, 0.4, 7, telemetry);
+        robot.driveForwardRotationAlignWall(3.25, 0.4, 7, telemetry, autonomusTimer);
 
-        robot.driveForwardTillTime( 5000, 0.20);
+        if (autonomusTimer.seconds() <= 24)
+            robot.driveForwardTillTime( 5000, 0.20);
     }
 
 }
